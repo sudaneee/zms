@@ -7,10 +7,15 @@ backups/
 archive/
 db.sqlite3
 *.sqlite3
-media/
-static/
+# uploads and collected static files at the project root (not the apps' own static/)
+/media/
+/static/
 school/media/
 school/static/
 RynoB/
 *.xlsx
 .DS_Store
+# old theme assets no page uses any more
+/src/static/src/login/
+/src/static/src/side_nav/
+/eval/static/
