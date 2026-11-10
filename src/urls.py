@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 
-from . import accounts, bulk, promotion, reports, review, signing, trail, views
+from . import accounts, bulk, promotion, reports, review, signing, summary, trail, views
 
 
 urlpatterns = [
@@ -26,7 +26,7 @@ urlpatterns = [
     path('behaivioural-excel-missed', views.bhvxl_missed, name='bhvxl-missed'),
     path('behaivioural-excel2', views.behav_sheet, name='behav_sheet'),
     path('std-alts', views.std_alts, name='Std-Alts'),
-    path('result-summary', views.class_summary, name='class-result-summary'),
+    path('result-summary', summary.result_summary, name='class-result-summary'),
     path('delete_result', views.delete_result, name='delete_result'),
     path('delete_bhv', views.delete_bhv, name='delete_bhv'),
     path('promote', promotion.promote, name='promote'),

@@ -202,29 +202,6 @@ def single_result_view(request):
 
 
 @require('view_reports')
-def class_summary(request):
-    if request.method == 'POST' and 'form1' in request.POST:
-        classs, term, session, subject = (request.POST.get(k, '') for k in ('class', 'term', 'session', 'subject'))
-        if not all(v.isdigit() for v in (classs, term, session, subject)):
-            messages.error(request, 'Choose a class, term, session and subject.')
-            return render(request, 'src/class_summary.html', {'subjects': Subject.objects.all()})
-        student_class = scoped_class(request.user, classs, include_archived=True)
-        subject = Subject.objects.filter(pk=subject).first()
-        result_summary = sorted(
-            StudentResult.objects.filter(subject=subject, student_class=student_class, session=session, term=term)
-            .select_related('student'), key=lambda r: (name_key(r.student), r.student_id))
-        bands = {'a_count': 70, 'b_count': 60, 'c_count': 50, 'd_count': 45, 'e_count': 40}
-        counts = dict.fromkeys(list(bands) + ['f_count', 'abs_count'], 0)
-        for r in result_summary:
-            band = next((k for k, floor in bands.items() if r.total >= floor), 'f_count')
-            counts['abs_count' if r.exam_absent else band] += 1
-        context = dict(counts, summary=result_summary, total_students=len(result_summary),
-                       subject=subject.subject_name if subject else '', classs=student_class.class_name)
-        return render(request, 'src/summary_page.html', context)
-    return render(request, 'src/class_summary.html', {'subjects': Subject.objects.all()})
-
-
-@require('view_reports')
 def class_result_summary(request):
     if request.method == 'POST' and 'form1' in request.POST:
         chosen = _class_term(request)

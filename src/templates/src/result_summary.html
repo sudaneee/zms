@@ -1,0 +1,170 @@
+{% extends "src/index.html" %}
+{% load static humanize %}
+{% block title %}Result summary{% endblock %}
+{% block crumb %}Reports{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'src/summary.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Result summary</h1>
+    <p>How a class, a section{% if sees_all %} or the whole school{% endif %} performed in a term: grades, subjects, the spread of averages, and who needs support.</p>
+  </div>
+  {% if summary %}<div class="page-actions no-print"><button type="button" class="btn btn-light" onclick="window.print()"><i class="fas fa-print"></i>Print</button></div>{% endif %}
+</div>
+
+<form method="GET" class="panel no-print">
+  <div class="panel-body">
+    <div class="form-row">
+      <div class="form-group col-md">
+        <label for="f-session">Session</label>
+        <select class="custom-select" name="session" id="f-session" required>
+          <option value="">Choose session</option>
+          {% for i in sessions %}<option value="{{ i.id }}" {% if chosen.session == i.id|stringformat:"s" %}selected{% endif %}>{{ i.session_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group col-md">
+        <label for="f-term">Term</label>
+        <select class="custom-select" name="term" id="f-term" required>
+          <option value="">Choose term</option>
+          {% for i in terms %}<option value="{{ i.id }}" {% if chosen.term == i.id|stringformat:"s" %}selected{% endif %}>{{ i.term_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group col-md">
+        <label for="f-scope">Class or section</label>
+        <select class="custom-select" name="scope" id="f-scope" required>
+          <option value="">Choose</option>
+          {% if sees_all %}<option value="school" {% if chosen.scope == "school" %}selected{% endif %}>Whole school</option>{% endif %}
+          {% if sections %}<optgroup label="Sections">
+          {% for s in sections %}<option value="section-{{ s.id }}">{{ s.section_name }}</option>{% endfor %}
+          </optgroup>{% endif %}
+          <optgroup label="Classes">
+          {% for c in classes %}<option value="class-{{ c.id }}">{{ c.class_name }}</option>{% endfor %}
+          </optgroup>
+          {% if archived_classes %}<optgroup label="Archived classes">
+          {% for c in archived_classes %}<option value="class-{{ c.id }}">{{ c.class_name }}</option>{% endfor %}
+          </optgroup>{% endif %}
+        </select>
+      </div>
+      <div class="form-group col-md">
+        <label for="f-subject">Subject <span class="muted">(optional)</span></label>
+        <select class="custom-select" name="subject" id="f-subject">
+          <option value="">All subjects</option>
+          {% for i in subjects_list %}<option value="{{ i.id }}" {% if chosen.subject == i.id|stringformat:"s" %}selected{% endif %}>{{ i.subject_name }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="panel-footer"><button type="submit" class="btn btn-primary"><i class="fas fa-chart-bar"></i>Show summary</button></div>
+</form>
+
+{% if summary %}
+<div class="summary-title">
+  <h2>{{ scope_label }}{% if subject %} · {{ subject.subject_name }}{% endif %}</h2>
+  <span class="muted">{{ session.session_name }} · {{ term.term_name }}</span>
+</div>
+
+<div class="stat-grid five">
+  <div class="stat"><div class="icon"><i class="fas fa-user-graduate"></i></div><div><div class="value">{{ summary.stats.students|intcomma }}</div><div class="label">students with results · {{ summary.stats.subjects }} subject{{ summary.stats.subjects|pluralize }}</div></div></div>
+  <div class="stat"><div class="icon blue"><i class="fas fa-percentage"></i></div><div><div class="value">{{ summary.stats.mean }}</div><div class="label">mean average (median {{ summary.stats.median }})</div></div></div>
+  <div class="stat"><div class="icon"><i class="fas fa-check-circle"></i></div><div><div class="value">{{ summary.stats.pass_rate }}%</div><div class="label">students averaging 40 or more ({{ summary.stats.passed }})</div></div></div>
+  <div class="stat"><div class="icon gold"><i class="fas fa-book"></i></div><div><div class="value">{{ summary.stats.subject_pass_rate }}%</div><div class="label">subject results passed (E or better){% if summary.stats.absent %} · {{ summary.stats.absent }} ABS{% endif %}</div></div></div>
+  <div class="stat"><div class="icon gold"><i class="fas fa-trophy"></i></div><div><div class="value">{{ summary.stats.top.average }}</div><div class="label">best average: {{ summary.stats.top.name }}{% if many_classes %} ({{ summary.stats.top.class }}){% endif %}</div></div></div>
+</div>
+
+<div class="chart-grid">
+  <section class="panel chart-panel">
+    <div class="panel-header"><h2>Grades awarded</h2><span class="hint">{{ summary.stats.results|intcomma }} subject results</span></div>
+    <div class="panel-body"><div class="chart" id="chart-grades" role="img" aria-label="Number of subject results at each grade"></div></div>
+    <details class="table-view"><summary>Table</summary>
+      <table class="table table-app table-sm"><thead><tr><th>Grade</th><th class="text-right">Results</th><th class="text-right">Share</th></tr></thead><tbody>
+      {% for g in summary.grades %}<tr><td>{{ g.grade }}</td><td class="text-right">{{ g.count }}</td><td class="text-right" data-share="{{ g.count }}"></td></tr>{% endfor %}
+      </tbody></table></details>
+  </section>
+
+  <section class="panel chart-panel">
+    <div class="panel-header"><h2>Spread of student averages</h2><span class="hint">{{ summary.stats.students }} students</span></div>
+    <div class="panel-body"><div class="chart" id="chart-histogram" role="img" aria-label="Number of students in each band of average score"></div></div>
+    <details class="table-view"><summary>Table</summary>
+      <table class="table table-app table-sm"><thead><tr><th>Average</th><th class="text-right">Students</th></tr></thead><tbody>
+      {% for b in summary.histogram %}<tr><td>{{ b.label }}</td><td class="text-right">{{ b.count }}</td></tr>{% endfor %}
+      </tbody></table></details>
+  </section>
+</div>
+
+<section class="panel chart-panel">
+  <div class="panel-header"><h2>Subjects: average total and grade mix</h2><span class="hint">best average first · hover a bar for details</span></div>
+  <div class="panel-body">
+    <div class="legend" id="legend-mix"></div>
+    <div class="chart" id="chart-subjects" role="img" aria-label="Average total and grade mix for each subject"></div>
+  </div>
+  <details class="table-view"><summary>Table</summary>
+    <div class="table-scroll"><table class="table table-app table-sm">
+      <thead><tr><th>Subject</th><th class="text-right">Students</th><th class="text-right">Average</th><th class="text-right">Highest</th><th class="text-right">Lowest</th>{% for g in summary.grades %}<th class="text-right">{{ g.grade }}</th>{% endfor %}<th class="text-right">Passed</th></tr></thead>
+      <tbody>{% for s in summary.subjects %}<tr><td>{{ s.name }}</td><td class="text-right">{{ s.students }}</td><td class="text-right">{{ s.average }}</td><td class="text-right">{{ s.highest }}</td><td class="text-right">{{ s.lowest }}</td>{% for g, n in s.grades.items %}<td class="text-right">{{ n }}</td>{% endfor %}<td class="text-right">{{ s.pass_rate }}%</td></tr>{% endfor %}</tbody>
+    </table></div></details>
+</section>
+
+<div class="chart-grid">
+  {% if summary.trend|length > 1 %}
+  <section class="panel chart-panel">
+    <div class="panel-header"><h2>Mean average by term</h2><span class="hint">{{ session.session_name }}</span></div>
+    <div class="panel-body"><div class="chart" id="chart-trend" role="img" aria-label="Mean student average for each term of the session"></div></div>
+    <details class="table-view"><summary>Table</summary>
+      <table class="table table-app table-sm"><thead><tr><th>Term</th><th class="text-right">Mean average</th><th class="text-right">Students</th></tr></thead><tbody>
+      {% for t in summary.trend %}<tr><td>{{ t.label }}</td><td class="text-right">{{ t.value }}</td><td class="text-right">{{ t.students }}</td></tr>{% endfor %}
+      </tbody></table></details>
+  </section>
+  {% endif %}
+  {% if many_classes %}
+  <section class="panel chart-panel">
+    <div class="panel-header"><h2>Mean average by class</h2><span class="hint">{{ summary.classes|length }} classes</span></div>
+    <div class="panel-body"><div class="chart" id="chart-classes" role="img" aria-label="Mean student average for each class"></div></div>
+    <details class="table-view"><summary>Table</summary>
+      <table class="table table-app table-sm"><thead><tr><th>Class</th><th class="text-right">Mean average</th><th class="text-right">Students</th></tr></thead><tbody>
+      {% for c in summary.classes %}<tr><td>{{ c.label }}</td><td class="text-right">{{ c.value }}</td><td class="text-right">{{ c.students }}</td></tr>{% endfor %}
+      </tbody></table></details>
+  </section>
+  {% endif %}
+  {% if summary.gender|length > 1 %}
+  <section class="panel chart-panel">
+    <div class="panel-header"><h2>Mean average by gender</h2></div>
+    <div class="panel-body"><div class="chart" id="chart-gender" role="img" aria-label="Mean student average by gender"></div></div>
+    <details class="table-view"><summary>Table</summary>
+      <table class="table table-app table-sm"><thead><tr><th>Gender</th><th class="text-right">Mean average</th><th class="text-right">Students</th></tr></thead><tbody>
+      {% for c in summary.gender %}<tr><td>{{ c.label }}</td><td class="text-right">{{ c.value }}</td><td class="text-right">{{ c.students }}</td></tr>{% endfor %}
+      </tbody></table></details>
+  </section>
+  {% endif %}
+</div>
+
+<div class="chart-grid">
+  <section class="panel">
+    <div class="panel-header"><h2>Top 10 students</h2></div>
+    <div class="table-scroll"><table class="table table-app table-sm">
+      <thead><tr><th>#</th><th>Student</th>{% if many_classes %}<th>Class</th>{% endif %}<th class="text-right">Subjects</th><th class="text-right">Average</th></tr></thead>
+      <tbody>{% for s in summary.top %}<tr><td class="muted">{{ forloop.counter }}</td><td>{{ s.name }}</td>{% if many_classes %}<td>{{ s.class }}</td>{% endif %}<td class="text-right">{{ s.subjects }}</td><td class="text-right"><strong>{{ s.average }}</strong></td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  <section class="panel">
+    <div class="panel-header"><h2>Students needing support</h2><span class="hint">average below 40, or 3+ subjects failed</span></div>
+    {% if summary.support %}
+    <div class="table-scroll"><table class="table table-app table-sm">
+      <thead><tr><th>Student</th>{% if many_classes %}<th>Class</th>{% endif %}<th class="text-right">Failed</th><th class="text-right">ABS</th><th class="text-right">Average</th></tr></thead>
+      <tbody>{% for s in summary.support %}<tr><td>{{ s.name }}</td>{% if many_classes %}<td>{{ s.class }}</td>{% endif %}<td class="text-right">{{ s.failed }}/{{ s.subjects }}</td><td class="text-right">{{ s.absent|default:"" }}</td><td class="text-right"><span class="badge badge-soft-danger">{{ s.average }}</span></td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="panel-body"><p class="muted mb-0"><i class="fas fa-check-circle"></i> No student is below 40 or failing three or more subjects.</p></div>{% endif %}
+  </section>
+</div>
+{{ charts|json_script:"summary-data" }}
+<div class="chart-tooltip" id="chart-tooltip" role="status" hidden></div>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if summary %}<script src="{% static 'src/summary.js' %}"></script>{% endif %}
+<script>
+(function () {
+  var scope = new URLSearchParams(window.location.search).get('scope');
+  var select = document.getElementById('f-scope');
+  if (scope && select) select.value = scope;
+})();
+</script>
+{% endblock %}

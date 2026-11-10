@@ -970,8 +970,10 @@ class AbsentFromExamTests(Fixture):
         self.assertEqual((row['absent'], row['counts'][5], row['total'], row['passed'], row['percent']), (1, 0, 2, 1, 50))
         amina = response.context['results'][self.amina]
         self.assertEqual((amina['absent'], amina['failed'], amina['average']), (['Mathematics'], [], 20.0))
-        summary = self.client.post('/result-summary', self.sel(form1='1'))
-        self.assertEqual((summary.context['abs_count'], summary.context['f_count']), (1, 0))
+        summary = self.client.get('/result-summary', {'session': self.session.id, 'term': self.term.id,
+                                                       'scope': f'class-{self.ss1.id}'}).context['summary']
+        grades = {g['grade']: g['count'] for g in summary['grades']}
+        self.assertEqual((grades['ABS'], grades['F']), (1, 0))
 
     def test_data_review_can_set_abs_and_undo(self):
         bad = self.result(self.amina, 10, 10, 544)
@@ -982,3 +984,107 @@ class AbsentFromExamTests(Fixture):
         self.client.post(f"/data-review/undo/{ReviewDecision.objects.get().id}")
         bad.refresh_from_db()
         self.assertEqual((bad.exam_absent, bad.exams), (False, 544))
+
+
+class ResultSummaryTests(Fixture):
+    def query(self, scope, **extra):
+        params = {'session': self.session.id, 'term': self.term.id, 'scope': scope}
+        params.update(extra)
+        return self.client.get('/result-summary', params)
+
+    def test_figures_follow_report_card_rules(self):
+        self.result(self.amina, 20, 20, 40)                          # 80 A
+        self.result(self.amina, 10, 10, 30, subject=self.english)     # 50 C
+        self.result(self.bashir, 10, 10, 15)                          # 35 F
+        absent = self.result(self.bashir, 10, 10, 0, subject=self.english)
+        absent.exam_absent = True
+        absent.save()
+        self.client.force_login(self.teacher)
+        summary = self.query(f'class-{self.ss1.id}').context['summary']
+        self.assertEqual(summary['stats']['students'], 2)
+        self.assertEqual(summary['stats']['mean'], 46.2)               # (65 + 27.5) / 2, one decimal
+        self.assertEqual(summary['stats']['pass_rate'], 50)
+        self.assertEqual({g['grade']: g['count'] for g in summary['grades']},
+                         {'A': 1, 'B': 0, 'C': 1, 'D': 0, 'E': 0, 'F': 1, 'ABS': 1})
+        self.assertEqual(summary['top'][0]['name'], 'Amina Bello')
+        self.assertEqual([s['name'] for s in summary['support']], ['Bashir Musa'])
+        maths = next(s for s in summary['subjects'] if s['name'] == 'Mathematics')
+        self.assertEqual((maths['students'], maths['pass_rate']), (2, 50))
+
+    def test_subject_filter(self):
+        self.result(self.amina, 20, 20, 40)
+        self.result(self.amina, 10, 10, 30, subject=self.english)
+        self.client.force_login(self.teacher)
+        summary = self.query(f'class-{self.ss1.id}', subject=self.english.id).context['summary']
+        self.assertEqual([s['name'] for s in summary['subjects']], ['English Language'])
+
+    def test_section_and_school_scope_respect_roles(self):
+        self.result(self.amina, 20, 20, 40)
+        self.result(self.ie_kid, 10, 10, 20)
+        self.client.force_login(self.teacher)
+        self.assertEqual(self.query(f'section-{self.ss.id}').context['summary']['stats']['students'], 1)
+        self.assertNotIn('summary', self.query(f'section-{self.ie.id}').context)
+        self.assertNotIn('summary', self.query('school').context)
+        self.assertEqual(self.query(f'class-{self.ie1.id}').status_code, 403)
+        self.client.force_login(self.admin)
+        self.assertEqual(self.query('school').context['summary']['stats']['students'], 2)
+
+    def test_names_are_not_injected_into_script(self):
+        self.amina.student_name = '</script><script>alert(1)</script>'
+        self.amina.save()
+        self.result(self.amina, 20, 20, 40)
+        self.client.force_login(self.teacher)
+        page = self.query(f'class-{self.ss1.id}').content.decode()
+        self.assertNotIn('<script>alert(1)', page)
+
+
+class EvaluationTests(Fixture):
+    def setUp(self):
+        super().setUp()
+        from eval.models import General_Questions
+        self.questions = [General_Questions.objects.create(item=f'Item {i}', section=s)
+                          for i, s in enumerate('AABC')]
+
+    def form(self, **overrides):
+        data = {'teacher_name': 'Zainab Umar', 'class': self.ss1.id, 'subject': self.maths.id,
+                'topic': 'Fractions', 'sub_topic': '', 'assessor': 'Head', 'date': '2026-10-01',
+                'general_comment': 'Good'}
+        data.update({f'q{q.id}': '4' for q in self.questions})
+        data.update(overrides)
+        return data
+
+    def test_staff_cannot_evaluate(self):
+        self.client.force_login(self.teacher)
+        self.assertEqual(self.client.get('/teacher-evaulation-form/').status_code, 403)
+        self.client.logout()
+        self.assertTemplateUsed(self.client.get('/teacher-evaulation-form/evaluation-view'), 'src/welcome.html')
+
+    def test_head_records_and_prints_an_evaluation(self):
+        from eval.models import Evaluation
+        self.client.force_login(self.head)
+        data = self.form()
+        data[f'q{self.questions[0].id}'] = '2'      # "Not satisfactory" is stored as 2
+        response = self.client.post('/teacher-evaulation-form/', data)
+        record = Evaluation.objects.get()
+        self.assertRedirects(response, f'/teacher-evaulation-form/{record.pk}')
+        self.assertEqual((record.total(), record.maximum()), (14, 20))
+        page = self.client.get(f'/teacher-evaulation-form/{record.pk}').content.decode()
+        self.assertIn('Not satisfactory', page)
+        self.assertEqual(AuditLog.objects.filter(model='Evaluation').count(), 1)
+
+    def test_every_item_must_be_rated(self):
+        from eval.models import Evaluation
+        self.client.force_login(self.head)
+        data = self.form()
+        del data[f'q{self.questions[2].id}']
+        self.client.post('/teacher-evaulation-form/', data)
+        self.assertFalse(Evaluation.objects.exists())
+
+    def test_head_sees_only_own_section(self):
+        from eval.models import Evaluation
+        Evaluation.objects.create(teacher_name='Other', student_class=self.ie1, subject=self.maths,
+                                  topic='x', assessor='y', date='2026-10-01')
+        self.client.force_login(self.head)
+        self.assertEqual(len(self.client.get('/teacher-evaulation-form/evaluation-view').context['evaluations']), 0)
+        self.client.force_login(self.admin)
+        self.assertEqual(len(self.client.get('/teacher-evaulation-form/evaluation-view').context['evaluations']), 1)

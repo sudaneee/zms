@@ -22,7 +22,7 @@ from openpyxl import Workbook
 from src import audit
 from src.access import require, scoped_class, scoped_classes
 from src.models import (Session, Student, StudentBehaviouralAssessment, StudentResult, Subject, Term)
-from src.reports import (class_result_summary, class_summary, result_view,  # noqa: F401 (routed in urls)
+from src.reports import (class_result_summary, result_view,  # noqa: F401 (routed in urls)
                          single_result_view)
 from src.scoring import (_as_int, behaviour_errors, exam_cell, exam_fields, expected_positions,
                          recompute_positions, score_errors)
