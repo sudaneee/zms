@@ -124,6 +124,12 @@ class StudentResult(SoftDeleteModel):
 
     class Meta:
         ordering = ['session']
+        # Every report, entry screen and summary filters by class/session/term
+        # (and subject); the result checker and promotion look up by student.
+        indexes = [
+            models.Index(fields=['student_class', 'session', 'term', 'subject'], name='result_class_term_subject'),
+            models.Index(fields=['student', 'session', 'term'], name='result_student_term'),
+        ]
 
     def __str__(self):
         return f'{self.session} {self.term} {self.subject} {self.student}'

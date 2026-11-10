@@ -1,4 +1,6 @@
 """Score limits agreed with the school, and subject position calculation."""
+from bisect import bisect_right
+
 from src.models import StudentResult
 
 CA1_MAX = 20
@@ -67,10 +69,16 @@ def behaviour_errors(values):
     return errors
 
 
+def positions_for(totals):
+    """Position of each total: 1 + number of strictly higher totals (ties share)."""
+    ordered = sorted(totals)
+    return [1 + len(ordered) - bisect_right(ordered, t) for t in totals]
+
+
 def expected_positions(results):
     """Map result id -> position: 1 + number of strictly higher totals."""
-    totals = [r.total for r in results]
-    return {r.id: 1 + sum(t > r.total for t in totals) for r in results}
+    results = list(results)
+    return dict(zip((r.id for r in results), positions_for([r.total for r in results])))
 
 
 def recompute_positions(student_class_id, subject_id, session_id, term_id):

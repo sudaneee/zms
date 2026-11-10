@@ -10,7 +10,8 @@ from io import BytesIO
 
 from django.contrib import messages
 from django.db import connection, transaction
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q, Window
+from django.db.models.functions import Rank
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -101,8 +102,8 @@ def result_in_scope(result, ids):
 
 # ------------------------------------------------------------ issue finders
 
-def _majority_class(rows):
-    counts = Counter(r.student_class_id for r in rows)
+def _majority_class(counts):
+    """The class most of a student's results that term were entered in (None on a tie)."""
     ranked = counts.most_common(2)
     if not ranked or (len(ranked) == 2 and ranked[0][1] == ranked[1][1]):
         return None
@@ -113,24 +114,31 @@ def duplicate_result_groups(ids):
     keys = (StudentResult.objects.values('student_id', 'session_id', 'term_id', 'subject_id')
             .annotate(n=Count('id')).filter(n__gt=1))
     students = {k['student_id'] for k in keys}
-    rows = (StudentResult.objects.filter(student_id__in=students)
-            .select_related('student', 'student__student_class', 'student_class__section',
-                            'subject', 'session', 'term'))
+    # Group with plain values first (ZMS has ~250k results); load full rows
+    # only for the duplicate copies themselves.
+    rows = StudentResult.objects.filter(student_id__in=students).values_list(
+        'id', 'student_id', 'session_id', 'term_id', 'subject_id', 'student_class_id', 'student__student_class_id')
     by_key, by_term = defaultdict(list), defaultdict(list)
-    for r in rows:
-        by_key[(r.student_id, r.session_id, r.term_id, r.subject_id)].append(r)
-        by_term[(r.student_id, r.session_id, r.term_id)].append(r)
-    groups = []
+    for rid, sid, ses, term, subj, cls, home in rows:
+        by_key[(sid, ses, term, subj)].append((rid, cls, home))
+        by_term[(sid, ses, term)].append(cls)
+    wanted = {}
     for key, copies in by_key.items():
-        if len(copies) < 2 or not any(result_in_scope(c, ids) for c in copies):
-            continue
-        majority = _majority_class(by_term[key[:3]])
+        if len(copies) > 1 and any(cls in ids or home in ids for _, cls, home in copies):
+            wanted[key] = [rid for rid, _, _ in copies]
+    copy_ids = [rid for rids in wanted.values() for rid in rids]
+    related = {r.id: r for r in StudentResult.objects.filter(pk__in=copy_ids).select_related(
+        'student', 'student__student_class', 'student_class__section', 'subject', 'session', 'term')}
+    groups = []
+    for key, rids in wanted.items():
+        copies = sorted((related[i] for i in rids), key=lambda c: c.id)
+        majority = _majority_class(Counter(by_term[key[:3]]))
         suggested = [c.id for c in copies if c.student_class_id == majority]
         first = copies[0]
         groups.append({
             'key': '-'.join(map(str, key)), 'student': first.student, 'session': first.session,
             'term': first.term, 'subject': first.subject,
-            'copies': sorted(copies, key=lambda c: c.id),
+            'copies': copies,
             'suggested_id': suggested[0] if len(suggested) == 1 else None,
         })
     groups.sort(key=lambda g: (g['session'].session_name, g['term'].id,
@@ -145,10 +153,10 @@ def duplicate_behaviour_groups(ids):
     rows = (StudentBehaviouralAssessment.objects.filter(student_id__in=students)
             .select_related('student', 'student__student_class', 'student_class__section',
                             'session', 'term'))
-    results_by_term = defaultdict(list)
-    for r in StudentResult.objects.filter(student_id__in=students).only(
+    results_by_term = defaultdict(Counter)
+    for sid, ses, term, cls in StudentResult.objects.filter(student_id__in=students).values_list(
             'student_id', 'session_id', 'term_id', 'student_class_id'):
-        results_by_term[(r.student_id, r.session_id, r.term_id)].append(r)
+        results_by_term[(sid, ses, term)][cls] += 1
     by_key = defaultdict(list)
     for r in rows:
         by_key[(r.student_id, r.session_id, r.term_id)].append(r)
@@ -235,10 +243,15 @@ def duplicate_students(ids):
         pairs = {pair_target(a.id, b.id) for i, a in enumerate(members) for b in members[i + 1:]}
         if pairs <= dismissed:
             continue
-        for s in members:
-            s.result_count = StudentResult.objects.filter(student=s).count()
-            s.behaviour_count = StudentBehaviouralAssessment.objects.filter(student=s).count()
         groups.append({'members': members, 'pair': f'{members[0].id}:{members[1].id}'})
+    member_ids = [m.id for g in groups for m in g['members']]
+    results = dict(StudentResult.objects.filter(student_id__in=member_ids).values('student_id')
+                   .annotate(n=Count('id')).values_list('student_id', 'n'))
+    behaviour = dict(StudentBehaviouralAssessment.objects.filter(student_id__in=member_ids).values('student_id')
+                     .annotate(n=Count('id')).values_list('student_id', 'n'))
+    for g in groups:
+        for m in g['members']:
+            m.result_count, m.behaviour_count = results.get(m.id, 0), behaviour.get(m.id, 0)
     groups.sort(key=lambda g: (g['members'][0].student_class.name, normalise_name(g['members'][0].student_name)))
     return groups
 
@@ -257,18 +270,19 @@ def students_without_class(user):
 
 
 def stale_positions(ids):
-    rows = list(StudentResult.objects.filter(student_class_id__in=ids).only(
-        'id', 'student_class_id', 'subject_id', 'session_id', 'term_id', 'total', 'subject_position'))
-    groups = defaultdict(list)
-    for r in rows:
-        groups[(r.student_class_id, r.subject_id, r.session_id, r.term_id)].append(r)
-    stale = {}
-    for members in groups.values():
-        expected = expected_positions(members)
-        for r in members:
-            if r.subject_position != expected[r.id]:
-                stale[r.id] = (r.subject_position, expected[r.id])
-    return stale
+    """{result id: (stored position, correct position)} for wrong subject positions.
+
+    RANK() over the class/subject/session/term group is exactly the report
+    rule (1 + number of strictly higher totals, ties share a position), so the
+    database finds the stale rows without loading every result.
+    """
+    ranked = (StudentResult.objects.filter(student_class_id__in=ids)
+              .annotate(expected=Window(Rank(), partition_by=[F('student_class_id'), F('subject_id'),
+                                                              F('session_id'), F('term_id')],
+                                        order_by=F('total').desc()))
+              .filter(~Q(subject_position=F('expected')))
+              .values_list('id', 'subject_position', 'expected'))
+    return {rid: (position, expected) for rid, position, expected in ranked}
 
 
 # ----------------------------------------------------------------- views
