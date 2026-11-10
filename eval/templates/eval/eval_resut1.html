@@ -1,0 +1,21 @@
+{% extends "src/index.html" %}
+{% load static %}
+{% block content %}
+
+<!--------------selection form------------------>
+    <div>
+        <h4 style="text-align: center;">Teachers Evaluation Report</h4>
+    </div>
+    <div class="main">
+        <form name="form1" method="POST">
+            {% csrf_token %}
+             <div class="row" style="padding-right: 10px;">
+                <div class="col">
+                <input type="text" class="form-control" placeholder ="Please Enter Evaluation Date in this Format: 'YYYY'-MM-DD'" name="date" style="text-align: center;">
+                </div>
+                <button name="form1" type="submit" class="btn btn-primary">GET</button>
+            </div>
+        </form>
+    </div>
+
+{% endblock content %}

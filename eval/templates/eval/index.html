@@ -1,0 +1,234 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700,900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'eval/fonts/icomoon/style.css' %}">
+
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'eval/css/bootstrap.min.css' %}">
+    
+    <!-- Style -->
+    <link rel="stylesheet" href="{% static 'eval/css/style.css' %}">
+
+    <title>Evaluation-Form</title>
+  </head>
+  <body>
+  
+
+
+
+<footer>
+  <div class="row">
+    <div class="col-md-12">
+      <p style="text-align: center;">Zaria Merit School: All rights reserved <a href="mailto:zariameritschool@gmail.com">zariameritschool@gmail.com</a></p>
+    </div>
+  </div>
+</footer>
+
+{% if messages %}
+  {% for msg in messages %}
+    <div class="alert alert-warning alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+      {{msg.message}}
+    </div>
+  {% endfor %}
+{% endif %}
+
+  <div class="content">
+    <div class="container">
+      <div class="row align-items-stretch no-gutters contact-wrap">
+        <div class="col-md-12">
+          <img style = "height: 100%; width: 100%;"src="{% static 'eval/images/header_merit.jpg' %}">
+        </div>
+        <div class="col-md-12">
+          <div class="form h-100">
+            <h3>TEACHER EVALUATION FORM</h3>
+            <form name="form1" method="POST">
+              {% csrf_token %}
+              <div class="row">
+                  <div class="col-md-12 form-group mb-3">
+                  <label for="" class="col-form-label">Name *</label>
+                  <input type="text" class="form-control" name="name" id="name" placeholder="Teacher's name">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 form-group mb-3">
+                  <label for="" class="col-form-label">Class *</label>
+                  <select class="custom-select" id="budget" name="class">
+                    <option>Select Class</option>
+                    {% for i in classs %}
+                      <option>{{i.class_name}}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6 form-group mb-3">
+                  <label for="" class="col-form-label">Subject *</label>
+                  <select class="custom-select" id="budget" name="subject">
+                    <option>Select Subject</option>
+                    {% for i in subject %}
+                      <option>{{i.subject_name}}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+
+              <div class="row">
+                <div class="col-md-6 form-group mb-3">
+                  <label for="message" class="col-form-label">Topic *</label>
+                  <input type="text" class="form-control" name="topic" id="name" placeholder="Topic">
+                </div>
+                <div class="col-md-6 form-group mb-3">
+                  <label for="message" class="col-form-label">Sub-Topic *</label>
+                  <input type="text" class="form-control" name="sub-topic" id="name" placeholder="Sub-Topic">
+                </div>
+              </div>
+              <!-----------------Tables-------------------->
+              <div class="row">
+                <h7> Section A: Lesson Preparation and Presentation </h7>
+                <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for i in section_a %}
+                    <tr>
+                      <td >{{i.item}}</td>
+                      <td>        
+                        <select class="custom-select" id="budget" name="tbl1-grade">
+                          <option></option>
+                          <option>Above Average</option>
+                          <option>Average</option>
+                          <option>Satisfactory</option>
+                          <option>Not satisfactory</option>
+                          <option>Deficient</option>
+                        </select>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+              <div class="row">
+                <h7> Section B: Class Management and Communication Skills </h7>
+                <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for i in section_b %}
+                    <tr>
+                      <td >{{i.item}}</td>
+                      <td>        
+                        <select class="custom-select" id="budget" name="tbl2-grade">
+                          <option></option>
+                          <option>Above Average</option>
+                          <option>Average</option>
+                          <option>Satisfactory</option>
+                          <option>Not satisfactory</option>
+                          <option>Deficient</option>
+                        </select>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+              <div class="row">
+                <h7> Section C: Evaluation Skills and Personality/Attitude </h7>
+                <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for i in section_c %}
+                    <tr>
+                      <td >{{i.item}}</td>
+                      <td>        
+                        <select class="custom-select" id="budget" name="tbl3-grade">
+                          <option></option>
+                          <option>Above Average</option>
+                          <option>Average</option>
+                          <option>Satisfactory</option>
+                          <option>Not satisfactory</option>
+                          <option>Deficient</option>
+                        </select>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+             <div class="row">
+                  <div class="col-md-12 form-group mb-3">
+                    <label for="message" class="col-form-label">General Comment *</label>
+                    <textarea class="form-control" name="g_comment" id="message" cols="30" rows="4"  placeholder="General Comment"></textarea>
+                  </div>
+            </div>
+
+             <div class="row">
+                  <div class="col-md-12 form-group mb-3">
+                    <label for="message" class="col-form-label">Name of Assessor *</label>
+                    <input type="text" class="form-control" name="a_name" id="name" placeholder="Name of Assessor">
+                  </div>
+            </div>
+
+              <div class="row">
+                <div class="col-md-12 form-group">
+                  <button name="form" type="submit" class="btn btn-primary">Submit</button>
+                  <span class="submitting"></span>
+                </div>
+              </div>
+
+   
+
+            </form>
+
+            <div id="form-message-warning mt-4"></div> 
+            <div id="form-message-success">
+              Your message was sent, thank you!
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+    
+<footer>
+  <div class="row">
+    <div class="col-md-12">
+      <p style="text-align: center;">Designed by Mussadiq Technologies:  <a href="mailto:ismailabbas355@gmail.com">07060936935</a></p>
+    </div>
+  </div>
+</footer>
+
+    
+
+    <script src="{% static 'eval/js/jquery-3.3.1.min.js' %}"></script>
+    <script src="{% static 'eval/js/popper.min.js' %}"></script>
+    <script src="{% static 'eval/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'eval/js/jquery.validate.min.js' %}"></script>
+    <script src="{% static 'eval/js/main.js' %}"></script>
+
+  </body>
+</html>

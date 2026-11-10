@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Ryno B Pro</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js"></script>
+	<link rel="stylesheet" href="{% static 'src/side_nav/style.css' %}">
+
+</head>
+<body>
+
+
+<div class="wrapper">
+{% if request.user.is_authenticated %}
+ <nav id="sidebar">
+
+ 	 <div class="sidebar-header">
+ 	 	<h3>Hello, {{user.first_name}}</h3>
+ 	 </div>
+ 	 <ul class="lisst-unstyled components">
+
+ 	 	<p>Automated Examination Report Sheet System</p>
+ 	 	<li class="active">
+ 	 		<a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Result Upload</a>
+ 	 	  <ul class="collapse list-unstyled" id="homeSubmenu">
+ 	 	  	<li>
+ 	 	  		<a href="{% url 'resultcreate' %}">Bulk Result Upload</a>
+ 	 	  	</li>
+ 	 	  	<li>
+ 	 	  		<a href="{% url 'std_upload' %}">Upload Excel File</a>
+ 	 	  	</li>
+
+ 	 	  </ul>
+ 	 	</li>
+ 	 	<li class="active">
+ 	 		<a href="#homeSubmenu2" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Result Update</a>
+ 	 	  <ul class="collapse list-unstyled" id="homeSubmenu2">
+ 	 	  	<li>
+ 	 	  		<a href="{% url 'updateresult' %}">Bulk Result Update</a>
+ 	 	  	</li>
+ 	 	  	<li>
+ 	 	  		<a href="{% url 'single_result_update' %}">Single Result Update</a>
+ 	 	  	</li>
+
+ 	 	  </ul>
+ 	 	</li>
+
+ 	 	<li>
+ 	 		<a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Settings</a>
+ 	 		<ul class="collapse list-unstyled" id="pageSubmenu">
+ 	 			<li>
+ 	 				<a href="{% url 'std_create' %}">Add New Students</a>
+ 	 			</li>
+ 	 			<li>
+ 	 				<a href="{% url 'score_sheet' %}">Print Score Sheet</a>
+ 	 			</li>
+        <li>
+          <a href="{% url 'excel_score_sheet' %}">Download Score Sheet</a>
+        </li>
+        <li>
+          <a href="{% url 'behav_sheet' %}">Download Behavioural Sheet</a>
+        </li>
+        <li>
+          <a href="{% url 'not_uploaded_results' %}">Add Missed Result</a>
+        </li>
+
+        <li>
+          <a href="{% url 'Std-Alts' %}">Other Settings</a>
+        </li>
+        <li>
+          <a href="{% url 'class_result_summary' %}"> Class Result Summary</a>
+        </li>
+
+ 	 		</ul>
+ 	 	<li class="active">
+ 	 		<a href="#homeSubmenu3" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Result View</a>
+ 	 	  <ul class="collapse list-unstyled" id="homeSubmenu3">
+ 	 	  	<li>
+ 	 	  		<a href="{% url 'result_view' %}">Class Result View</a>
+ 	 	  	</li>
+ 	 	  	<li>
+ 	 	  		<a href="{% url 'single_result_view' %}">Single Result View</a>
+ 	 	  	</li>
+ 	 	  </ul>
+ 	 	</li>
+    <li class="active">
+      <a href="#homeSubmenu5" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Behavioural Assessment</a>
+      <ul class="collapse list-unstyled" id="homeSubmenu5">
+        <li>
+          <a href="{% url 'settings' %}">Upload on Site</a>
+        </li>
+        <li>
+          <a href="{% url 'bhvxl' %}">Upload with Excel</a>
+        </li>
+        <li>
+          <a href="{% url 'bhvxl-missed' %}">Upload missed Assessment</a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="active">
+      <a href="#homeSubmenu9" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Teacher Evaluation</a>
+      <ul class="collapse list-unstyled" id="homeSubmenu9">
+        <li>
+          <a href="{% url 'evaluation' %}">Upload Teachers Evalaution</a>
+        </li>
+        <li>
+          <a href="{% url 'evaluation-view' %}">View Teachers Evalaution</a>
+        </li>
+      </ul>
+    </li>
+	<li>
+		<a href="{% url 'class-result-summary' %}">Result Summary</a>
+	  </li>
+    <li>
+      <a href="{% url 'delete_result' %}">Delete Results</a>
+    </li>
+    <li>
+      <a href="{% url 'delete_bhv' %}">Delete Behavioural Assesment</a>
+    </li>
+    <li>
+      <a href="{% url 'admin:index' %}">Admin Panel</a>
+    </li>
+
+    <li>
+      <a href="{% url 'logout' %}">Logout</a>
+    </li>
+
+ 	 </ul>
+ </nav>
+
+{% endif %}
+
+
+
+
+<div id="content">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  	<div class="container-fluid">
+  		<button type="button" id="sidebarCollapse" class="btn  btn-info">
+  			<i class="fas fa-align-left"></i>
+  			<span>Menu</span>
+  		</button>
+  	</div>
+  </nav>
+
+{% block content %}
+
+{% endblock %}
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script>
+
+$(document).ready(function () {
+            $('#sidebarCollapse').on('click', function () {
+                $('#sidebar').toggleClass('active');
+            });
+        });
+
+</script>
+
+
+
+</body>
+
+</html>

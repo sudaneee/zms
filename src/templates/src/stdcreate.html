@@ -1,0 +1,49 @@
+{% extends 'src/index.html' %}
+{% block content %}
+<!----------------Styles--------------------------->
+	<style type="text/css">
+		h1, h2, h3, h4, h5, h6 {
+			color: black;
+			text-align: center;
+		}
+		.form-control{
+			color: black;
+		}
+	</style>
+{% if messages %}
+  {% for msg in messages %}
+    <div class="alert alert-info alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+      {{msg.message}}
+    </div>
+  {% endfor %}
+{% endif %}
+	<div>
+		<h1> Upload Student Using Excel </h1>
+		<h4> Please Select Class and a file you wish to upload for </h4>
+	</div>
+
+	<div class="main">
+
+        <form name ="form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+		    <div class="form-group" >
+		        <select class="form-control" name="class">
+		        	<option>Class</option>
+			        {% for i in classes %}
+			        	<option>{{ i.class_name }}</option>
+				    {% endfor %}
+			    </select>
+            </div>
+            <input type="file"
+                   title="Upload excel file"
+                   name="excel_file"
+                   style="border: 1px solid black; padding: 5px;"
+                   required="required">
+			<button name ="form" type="submit" class="btn btn-primary">Upload</button>
+
+        </form>
+	</div>
+
+
+{% endblock content %}

@@ -1,0 +1,41 @@
+{% extends "src/index.html" %}
+{% load static %}
+{% block content %}
+
+
+<!--------------selection form------------------>
+	<div>
+		<h1 style="text-align: center;"> Result Checker </h1>
+		<h4 style="text-align: center;"> Please Select Session, Term and enter student registration No</h4>
+	</div>
+	<div class="main">
+		<form name="form1" method="POST">
+			{% csrf_token %}
+		 	 <div style="padding-right: 150px; padding-left: 150px;">
+			    <div class="form-group" >
+			        <select class="form-control" name="session">
+			        	<option>Session</option>
+			        	{% for i in sessions %}
+				        <option>{{i.session_name}}</option>
+
+				        {% endfor %}
+				    </select>
+			    </div>
+			    <div class="form-group" >
+				    <select class="form-control" name="term">
+			        	<option>Term</option>
+			        	{% for i in terms %}
+				        <option>{{i.term_name}}</option>
+
+				        {% endfor %}
+				    </select>
+                </div>
+                <div class="form-group" >
+                	<h7>Student ID:</h7>
+                    <input type="number" name="student_id">
+                </div>
+			    <button name="form1" type="submit" class="btn btn-primary">GET</button>
+			</div>
+		</form>
+	</div>
+{% endblock content %}

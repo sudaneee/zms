@@ -1,0 +1,50 @@
+{% extends "src/index.html" %}
+{% load static %}
+{% block content %}
+
+<!--------------selection form------------------>
+	<table class="table">
+	  <thead>
+		<tr>
+			<th scope="col">Class</th>
+			<td>{{classs}}</td>
+		  </tr>
+	    <tr>
+	      <th scope="col">Subject</th>
+	      <td>{{subject}}</td>
+	    </tr>
+	    <tr>
+			<th scope="col">Total Number of Students</th>
+			<td>{{total_students}}</td>
+		  </tr>
+	  </thead>
+	  <tbody>
+	    <tr>
+	    	<th>Grade</th>
+	    	<th>No. of Student</th>
+	    </tr>
+	    <tr>
+			<td>Exellent</td>
+	    	<td>A:-----{{a_count}}</td>
+	    </tr>
+	    <tr>
+			<td>Good</td>
+	    	<td>B:-----{{b_count}}</td>
+	    </tr>
+	    <tr>
+			<td>Credit</td>
+	    	<td>C:-----{{c_count}}</td>
+	    </tr>
+	    <tr>
+			<td>Pass</td>
+	    	<td>D:-----{{d_count}} <span><br>E:-----{{e_count}}</span></td>
+	    </tr>
+	    <tr>
+			<td>Fail</td>
+	    	<td>F:-----{{f_count}}</td>
+	    </tr>
+	  </tbody>
+	</table>
+
+
+{% endblock content %}

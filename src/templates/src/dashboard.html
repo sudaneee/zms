@@ -1,0 +1,20 @@
+
+{% extends "src/index.html" %}
+{% load static %}
+{% block content %}
+
+
+
+<section class="all-menu">
+  <p>Welcome to Zaria Merit School</p>
+</section>
+{% if messages %}
+  {% for msg in messages %}
+    <div class="alert alert-info alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+      {{msg.message}}
+    </div>
+  {% endfor %}
+{% endif %}
+{% endblock content %}
+

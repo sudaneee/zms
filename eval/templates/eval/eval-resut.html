@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <style type="text/css">
+    	.table-div {
+    		margin-right: 50px;
+    		margin-left: 50px;
+    	}
+    	@media print{
+	    	table { page-break-inside:auto }
+		    tr    { page-break-inside:avoid; page-break-after:auto }
+		    thead { display:table-header-group }
+		    tfoot { display:table-footer-group }
+		    div   { page-break-inside:avoid; }
+
+    	}
+
+    </style>
+	<title></title>
+</head>
+<body>
+
+{% for key, result in results.items %}
+	<div class="table-div">
+		<div class="row">
+			<img style = "height: 150px; width: 100%;"src="{% static 'eval/images/header_merit.jpg' %}">
+		</div>
+		<div class="row">
+
+			<table class="table">
+			  <thead>
+			    <tr>
+			      <th scope="col">Teacher's Name:</th>
+			      <td scope="col">{{result.teacher_name}}</td>
+			      <th scope="col">Class Taught:</th>
+			      <td scope="col">{{result.classs}}</td>
+			    </tr>
+			    <tr>
+			      <th scope="col">Subject Taught:</th>
+			      <td scope="col">{{result.subject}}</td>
+			      <th scope="col">Topic Taught:</th>
+			      <td scope="col">{{result.topic}}</td>
+			    </tr>
+			    <tr>
+			      <th scope="col">Sub-Topic Taught:</th>
+			      <td scope="col">{{result.sub_topic}}</td>
+			      <th scope="col">Name of Assessor</th>
+			      <td scope="col">{{result.assessor}}</td>
+			    </tr>
+			  </thead>
+			</table>
+
+			
+			<div class="row">
+			<!--------------Section A------------------------->
+
+				<table class="table">
+				  <thead>
+				  	<tr>
+				  		<th style = "text-align: center;"scope="col" colspan="4">Section A: Lesson Preparation and Presentation</th>
+				  	</tr>
+				    <tr>
+				      <th scope="col">S/N</th>
+				      <th scope="col">Item</th>
+				      <th scope="col">Score</th>
+				      <th scope="col">Remark</th>
+				    </tr>
+				  </thead>
+				  <tbody>
+				  	{% for i in result.a_items|slice:"0:8" %}
+					    <tr>
+					      <th scope="row">{{ forloop.counter }}</th>
+					      <td>{{ i.questions_items }}</td>
+					      <td>{{ i.score }}</td>
+					      <td>{% if i.score == 5%}Above Average
+					      	{% elif i.score == 4%}Average
+					  		{% elif i.score == 3%}Satisfactory
+					  		{% elif i.score == 2%}Not satisfactory
+					  		{% elif i.score == 1%}Deficient
+					  		{% else %}
+					  		{% endif %}
+					  		</td>
+					    </tr>
+					{% endfor %}
+				  </tbody>
+	                <tfoot>
+	                    <tr>
+	                    
+	                      <td colspan="2"style="text-align: right;">Sub-Total:</td>
+	  						
+	                     	<td>{{ result.a_t_score }}</td>
+	                 
+	                    </tr>
+                    </tfoot>
+				</table>
+			</div>
+			<!-----------------End of Section----------------------->
+
+			<!--------------Section A------------------------->
+			<div class="row">
+				<table class="table">
+				  <thead>
+				  	<tr>
+				  		<th style = "text-align: center;"scope="col" colspan="4">Section B: Class Management and Communication Skills</th>
+				  	</tr>
+				    <tr>
+				      <th scope="col">S/N</th>
+				      <th scope="col">Item</th>
+				      <th scope="col">Score</th>
+				      <th scope="col">Remark</th>
+				    </tr>
+				  </thead>
+				  <tbody>
+				  	{% for i in result.a_items|slice:"8:14" %}
+					    <tr>
+					      <th scope="row">{{ forloop.counter }}</th>
+					      <td>{{ i.questions_items }}</td>
+					      <td>{{ i.score }}</td>
+					      <td>{% if i.score == 5%}Above Average
+					      	{% elif i.score == 4%}Average
+					  		{% elif i.score == 3%}Satisfactory
+					  		{% elif i.score == 2%}Not satisfactory
+					  		{% elif i.score == 1%}Deficient
+					  		{% else %}
+					  		{% endif %}
+					  		</td>
+					    </tr>
+					{% endfor %}
+				  </tbody>
+				  <tfoot>
+	                    <tr>
+	                    
+	                      <td colspan="2"style="text-align: right;">Sub-Total:</td>
+	               	
+	                     	<td>{{ result.b_t_score }}</td>
+	                    </tr>
+                    </tfoot>
+				</table>
+			<!-----------------End of Section----------------------->
+			</div>
+			<!--------------Section A------------------------->
+			<div class="row">
+				<table class="table">
+				  <thead>
+				  	<tr>
+				  		<th style = "text-align: center;"scope="col" colspan="4">Section C: Evaluation Skills and Personality/Attitude</th>
+				  	</tr>
+				    <tr>
+				      <th scope="col">S/N</th>
+				      <th scope="col">Item</th>
+				      <th scope="col">Score</th>
+				      <th scope="col">Remark</th>
+				    </tr>
+				  </thead>
+				  <tbody>
+				  	{% for i in result.a_items|slice:"14:20" %}
+					    <tr>
+					      <th scope="row">{{ forloop.counter }}</th>
+					      <td>{{ i.questions_items }}</td>
+					      <td>{{ i.score }}</td>
+					      <td>{% if i.score == 5%}Above Average
+					      	{% elif i.score == 4%}Average
+					  		{% elif i.score == 3%}Satisfactory
+					  		{% elif i.score == 2%}Not satisfactory
+					  		{% elif i.score == 1%}Deficient
+					  		{% else %}
+					  		{% endif %}
+					  		</td>
+					    </tr>
+					{% endfor %}
+				  </tbody>
+				   <tfoot>
+	                    <tr>
+	                      <td colspan="2"style="text-align: right;">Sub-Total:</td>	
+	                     	<td>{{ result.c_t_score }}</td>
+	                    </tr>
+	                	<tr>
+	                      <td colspan="2"style="text-align: right;">Overal-Total:</td>	
+	                     	<td>{{ result.t_total }}</td>
+	                    </tr>
+                    </tfoot>
+				</table>
+			</div>
+			<div class="row">
+				<label>General Comment:</label>
+				<textarea>{{result.general_comment}}</textarea>
+				<label>Date: {{result.upload_date}}</label>
+			</div>
+			<!-----------------End of Section----------------------->
+		</div>
+	</div>
+{% endfor %}
+
+
+
+
+
+	
+
+  <footer style="text-align: center; padding: 3px; height: 60px; background-color: #1408bd; color: white;">
+    <p>Designed By: Musaddiq Technologies<br>
+    <a href="mailto:ismailabbas355@gmail.com">+2347060936935</a></p>
+  </footer>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+</body>
+</html>
+

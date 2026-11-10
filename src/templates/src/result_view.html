@@ -1,0 +1,202 @@
+{% extends "src/index.html" %}
+{% load static %}
+{% block content %}
+
+<!--------------selection form------------------>
+
+	<div class="main">
+		<form name="form1" method="POST">
+			{% csrf_token %}
+		 	 <div class="row" style="padding-right: 10px;">
+			    <div class="col">
+			        <select class="form-control" name="session">
+			        	<option>Session</option>
+			        	{% for i in sessions %}
+				        <option>{{i.session_name}}</option>
+
+				        {% endfor %}
+				    </select>
+			    </div>
+			    <div class="col">
+			        <select class="form-control" name="term">
+			        	<option>Term</option>
+			        	{% for i in terms %}
+				        <option>{{i.term_name}}</option>
+
+				        {% endfor %}
+				    </select>
+			    </div>
+			    <div class="col">
+			        <select class="form-control" name="class">
+			        	<option>Class</option>
+				        {% for i in classes %}
+				        	<option>{{ i.class_name }}</option>
+					    {% endfor %}
+				    </select>
+			    </div>
+			    <button name="form1" type="submit" class="btn btn-primary">GET</button>
+			</div>
+		</form>
+	</div>
+<!--------------All result View ------------------>
+
+
+{% for key, result in results.items %} {% for i in bhv %}
+    {% if forloop.counter == forloop.parentloop.counter %}
+
+        <div class="card">
+            <div class="card-header">
+                <img style="width: 100%; height: 200px;" src="{{some_images.h_image.url}}">
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered table-sm">
+                    <thead class="thead-light">
+                        <tr><th colspan="8" style="text-align: center; font-size:30px; ">Examination Report Sheet</th></tr>
+                        <tr><th colspan="8" style="text-align: center;">Student Information</th></tr>
+                        <tr>
+                        <th style="text-align: center;  background-color: white; font-size: 20px;">Name</th>
+                        <td style="text-align: center; font-size: 20px;">{{result.student}}</td>
+                        <th style="text-align: center; background-color: white; font-size: 20px;">Class</th>
+                        <td style="text-align: center; font-size: 20px;">{{result.classs}}</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <th style="text-align: center; font-size: 20px;">Session</th>
+                        <td style="text-align: center; font-size: 20px;">{{i.session}}</td>
+                        <th style="text-align: center; font-size: 20px;">Term</th>
+                        <td style="text-align: center; font-size: 20px;">{{i.term}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table table-bordered table-sm">
+                    <thead class="thead-light">
+                        <tr><th colspan="8" style="text-align: center;">Scores</th></tr>
+                        <tr>
+                        <th style="text-align: center; background-color: white;">S/N</th>
+                        <th style="text-align: center; background-color: white;">Subject</th>
+                        <th style="text-align: center; background-color: white;">First CA Score</th>
+                        <th style="text-align: center; background-color: white;">Second CA Score</th>
+                        <th style="text-align: center; background-color: white;">Exams Score</th>
+                        <th style="text-align: center; background-color: white;">Total Score</th>
+                        <th style="text-align: center; background-color: white;">Grade</th>
+                        <th style="text-align: center; background-color: white;">Position</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in result.subjects %}
+                        <tr>
+                            <td style="text-align: center;">{{ forloop.counter }}</td>
+                            <td>{{ subject.subject }}</td>
+                            <td style="text-align: center; font-weight: bold;">{{ subject.ca1 }}</td>
+                            <td style="text-align: center;">{{ subject.ca2 }}</td>
+                            <td style="text-align: center;">{{ subject.exams }}</td>
+                            <td style="text-align: center;">{{ subject.total }}</td>
+                            <td style="text-align: center;">{{ subject.grade }}</td>
+
+                            {% if subject.subject_position == 1 or subject.subject_position == 11 or subject.subject_position == 31 or subject.subject_position == 41 or subject.subject_position == 51 or subject.subject_position == 61 or subject.subject_position == 71 or subject.subject_position == 81 or subject.subject_position == 91  %}
+                                <td style="text-align: center;">{{ subject.subject_position }}st</td>
+                            {% elif subject.subject_position == 2 or subject.subject_position == 22 or subject.subject_position == 32 or subject.subject_position == 42 or subject.subject_position == 52 or subject.subject_position == 62 or subject.subject_position == 72 or subject.subject_position == 82 or subject.subject_position == 92 %}
+                                <td style="text-align: center;">{{ subject.subject_position }}nd</td>
+                            {% elif subject.subject_position == 3 or subject.subject_position == 23 or subject.subject_position == 33 or subject.subject_position == 43 or subject.subject_position == 53 or subject.subject_position == 63 or subject.subject_position == 73 or subject.subject_position == 83 or subject.subject_position == 93 %}
+                                <td style="text-align: center;">{{ subject.subject_position }}rd</td>
+                            {% else %}
+                                <td style="text-align: center;">{{ subject.subject_position }}th</td>
+                            {% endif %}
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                          <td colspan="3"style="text-align: right;">Overal Total:</td>
+                          <td>{{ result.overal_total }}</td>
+                          <td style="text-align: right;">Average:</td>
+                          <td>{{ result.average }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <table class="table table-bordered table-sm">
+                    <thead class="thead-light">
+                        <tr><th colspan="8" style="text-align: center;">Behavioural Assessment</th></tr>
+                        <tr>
+                        <th style="text-align: center; background-color: white;">Conduct</th>
+                        <td style="text-align: center;">{{ i.conduct }}</td>
+                        <th style="text-align: center; background-color: white;">Punctuality</th>
+                        <td style="text-align: center;">{{ i.punctuality }}</td>
+                        <th style="text-align: center; background-color: white;">Dedication</th>
+                        <td style="text-align: center;">{{ i.dedication }}</td>
+                        <th style="text-align: center; background-color: white;">Particapation in Class</th>
+                        <td style="text-align: center;">{{ i.participation }}</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th style="text-align: center; background-color: white;">Hospitality</th>
+                            <td style="text-align: center;">{{ i.hospitality }}</td>
+                            <th style="text-align: center; background-color: white;">Neatness</th>
+                            <td style="text-align: center;">{{ i.neatness }}</td>
+                            <th style="text-align: center; background-color: white;">Creativity</th>
+                            <td style="text-align: center;">{{ i.creativity }}</td>
+                            <th style="text-align: center; background-color: white;">Physical Health</th>
+                            <td style="text-align: center;">{{ i.physical }}</td>
+                        </tr>
+                    </tbody>
+                    <img style="height:200px; width: 100%;"src="{{some_images.g_image.url}}">
+                </table>
+
+
+
+                <table class="table table-bordered table-sm">
+                    <thead class="thead-light">
+                        <tr>
+                        <th style="text-align: center; background-color: white;">Assessors</th>
+                        <th style="text-align: center; background-color: white;">Comment</th>
+                        <th style="text-align: center; background-color: white;">Date</th>
+                        <th style="text-align: center; background-color: white;">Signature</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="text-align: center;">FORM MASTER:</td>
+                            {% if result.average > 70 or result.average == 70  %}
+                                <td style="text-align: center;">Outsanding result, work harder</td>
+                            {% elif result.average > 60 or result.average == 60  %}
+                            <td style="text-align: center;">Very good result, improve next term</td>
+                            {% elif result.average > 50 or result.average == 50  %}
+                                <td style="text-align: center;">Good result, put more effort</td>
+                            {% elif result.average > 40 or result.average == 40  %}
+                                <td style="text-align: center;">Fair result, concentrate on your studies</td>
+                            {% else %}
+                                <td style="text-align: center;">Very weak result, concentrate on your studies please</td>
+                            {% endif %}
+
+                            <td id="datef"style="text-align: center;"></td>
+                            <td style="text-align: center;"><img src="" style="height:30px; width: 100px;"></td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center;">PRINCIPAL:</td>
+                            {% if result.average > 70 or result.average == 70  %}
+                                <td style="text-align: center;">Excellent performance, keep it up</td>
+                            {% elif result.average > 60 or result.average == 60  %}
+                            <td style="text-align: center;">Very good performance, put more effort</td>
+                            {% elif result.average > 50 or result.average == 50  %}
+                                <td style="text-align: center;">Good performance, you need be more serious</td>
+                            {% elif result.average > 40 or result.average == 40  %}
+                                <td style="text-align: center;">Fair performance, you need to be serious with your studies</td>
+                            {% else %}
+                                <td style="text-align: center;">Very weak performance, you need to be serious with your studies please</td>
+                            {% endif %}
+
+                            <td id="date" style="text-align: center;"></td>
+                            <td style="text-align: center;"><img src="" style="height:30px; width: 100px;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            </div>
+
+        </div>
+    {% endif %}
+{% endfor %} {% endfor %}
+{% endblock content %}
