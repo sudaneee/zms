@@ -6,18 +6,38 @@
   <title>Report cards · {{ f_classs }} · {{ p_term }}</title>
   <link rel="icon" href="{% static 'logo.jpg' %}">
   <link rel="stylesheet" href="{% static 'src/report_card.css' %}">
+  {% if public_view %}<meta name="robots" content="noindex, nofollow">{% endif %}
 </head>
 <body>
 <div class="toolbar">
+  {% if public_view %}
+  <div>
+    <strong>{{ school_name }}</strong>
+    <span>Online result · {{ f_classs }} · {{ p_term }}</span>
+  </div>
+  {% else %}
   <div>
     <strong>{{ results|length }} report card{{ results|length|pluralize }}</strong>
     <span>{{ f_classs }} · {{ p_term }}</span>
   </div>
+  {% endif %}
   <div class="toolbar-actions">
     <button type="button" onclick="window.print()">Print</button>
     {% if user.is_authenticated %}<a href="javascript:history.back()">Back</a>{% endif %}
   </div>
 </div>
+
+{% if public_view %}
+<div class="status-banner{% if head_approval and approval_status.unchanged %} ok{% endif %}">
+  {% if head_approval and approval_status.unchanged %}
+    ✓ Approved by {{ head_approval.signer_name }} on {{ head_approval.signed_at|date:"d-m-Y" }}. This result matches what the school approved.
+  {% elif head_approval %}
+    The school's records have changed since this result was approved on {{ head_approval.signed_at|date:"d-m-Y" }}. Contact the school.
+  {% else %}
+    This result has not yet been approved by the school and may still change.
+  {% endif %}
+</div>
+{% endif %}
 
 {% for key, result in results.items %}{% with i=result.bhv %}
 <article class="card{% if result.subjects|length > 11 %} dense{% endif %}{% if result.subjects|length > 16 %} denser{% endif %}">
@@ -117,6 +137,13 @@
           <li><b>5</b>Excellent</li><li><b>4</b>Good</li><li><b>3</b>Fair</li><li><b>2</b>Weak</li><li><b>1</b>Poor</li>
         </ul>
       </div>
+      {% if result.link %}
+      <div class="online">
+        <img src="{{ result.link.qr }}" alt="QR code for this result">
+        <p><b>View this result online</b>Scan the code with a phone camera. It opens this student's result only.
+          {% if approvals.head %}<br>Approved by {{ approvals.head.signer_name }} on {{ approvals.head.signed_at|date:"d-m-Y" }}.{% endif %}</p>
+      </div>
+      {% endif %}
     </section>
   </div>
 
@@ -142,13 +169,6 @@
     </div>
   </section>
 
-  {% if result.verify %}
-  <section class="verify">
-    <img src="{{ result.verify.qr }}" alt="verification QR code">
-    <p>Electronically approved by {{ approvals.head.signer_name }} on {{ approvals.head.signed_at|date:"d-m-Y" }}.<br>
-      Scan the code or visit <span class="url">{{ result.verify.url }}</span> to confirm this result is genuine.</p>
-  </section>
-  {% endif %}
 </article>
 {% endwith %}{% endfor %}
 </body>

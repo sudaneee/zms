@@ -34,7 +34,7 @@
         <tr><th>Subjects</th><td>{{ approved.subjects }}</td></tr>
         <tr><th>Total</th><td>{{ approved.total }}</td></tr>
         <tr><th>Average</th><td>{{ approved.average }}</td></tr>
-        <tr><th>Class position</th><td>{{ approved.position }}</td></tr>
+        {% if show_class_position %}<tr><th>Class position</th><td>{{ approved.position }}</td></tr>{% endif %}
         <tr><th>Approved by</th><td>{{ approval.signer_name }}<br><img class="sig" src="{{ approval.signature }}" alt="signature"></td></tr>
         <tr><th>Approved on</th><td>{{ approval.signed_at|date:"d-m-Y H:i" }}</td></tr>
       </table>

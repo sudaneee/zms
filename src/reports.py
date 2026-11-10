@@ -17,7 +17,8 @@ from django.shortcuts import render
 
 from src.access import require, scoped_class
 from src.models import (Session, StudentBehaviouralAssessment, StudentClass, StudentResult, Subject, Term, sets)
-from src.signing import active_approvals, verification_for
+from src.public_result import result_link
+from src.signing import active_approvals
 
 
 def ordinal(n):
@@ -118,11 +119,11 @@ def build_result_analysis(student_class, session, term):
 def card_context(request, student_class, session, term, student_ids=None):
     report, subjects, averages = build_class_report(student_class, session, term)
     approvals = active_approvals(student_class, session, term)
-    head = approvals.get('head')
-    for r in report.values():
-        r['verify'] = verification_for(request, head, r['student']) if head else None
     if student_ids is not None:
         report = {s: r for s, r in report.items() if s.id in student_ids}
+    for r in report.values():
+        # One QR per card: opens this student's result online, no login needed.
+        r['link'] = result_link(request, r['student'], student_class, session, term)
     section = student_class.section
     return {
         'date': datetime.datetime.now(),

@@ -683,7 +683,8 @@ class SigningTests(Fixture):
         self.client.force_login(self.exoss)
         page = self.client.post('/bulk-result-view', dict(self.sel, form1='1')).content.decode()
         self.assertEqual(page.count('alt="signature"'), 4)   # 2 cards x (teacher + head)
-        self.assertIn('/verify/', page)
+        self.assertEqual(page.count('alt="QR code for this result"'), 2)
+        self.assertIn('Approved by', page)
 
         result = StudentResult.objects.get(student=self.amina)
         self.client.post('/update-result', dict(self.sel, form2='1', subject=self.maths.id, result_id=[result.id],
@@ -1111,3 +1112,67 @@ class ReportCardWordingTests(TestCase):
         self.assertEqual(remark(r), 'Pass')
         r.exam_absent = True
         self.assertEqual(remark(r), 'Absent')
+
+
+class PublicResultLinkTests(Fixture):
+    def setUp(self):
+        super().setUp()
+        self.result(self.amina, 20, 20, 40)
+        self.result(self.bashir, 10, 10, 15)
+        self.term2 = Term.objects.create(term_name='Second Term')
+
+    def link(self, student):
+        from django.test import RequestFactory
+        from src.public_result import result_link
+        request = RequestFactory().get('/')
+        return result_link(request, student, self.ss1, self.session, self.term)['url'].replace('http://testserver', '')
+
+    def test_card_link_opens_only_that_student_without_login(self):
+        page = self.client.get(self.link(self.amina))
+        self.assertEqual(page.status_code, 200)
+        html = page.content.decode()
+        self.assertIn('Amina Bello', html)
+        self.assertNotIn('Bashir Musa', html)
+        self.assertIn('noindex', html)
+        self.assertEqual(page['X-Robots-Tag'], 'noindex, nofollow')
+        self.assertIn('not yet been approved', html)
+
+    def test_changing_any_part_of_the_link_is_refused(self):
+        url = self.link(self.amina)
+        _, _, payload, code = url.split('/')
+        sid, cid, ses, term = payload.split('-')
+        tampered = [
+            f'/r/{self.bashir.id}-{cid}-{ses}-{term}/{code}',          # another student
+            f'/r/{sid}-{cid}-{ses}-{self.term2.id}/{code}',            # another term
+            f'/r/{sid}-{self.ss2.id}-{ses}-{term}/{code}',             # another class
+            f'/r/{payload}/{code[:-1]}A' if code[-1] != 'A' else f'/r/{payload}/{code[:-1]}B',
+            f'/r/{payload}/', f'/r/{sid}-{cid}/{code}', f'/r/x-y-z-w/{code}',
+        ]
+        for bad in tampered:
+            response = self.client.get(bad)
+            self.assertIn(response.status_code, (404,), bad)
+            self.assertNotIn('Amina', response.content.decode(), bad)
+            self.assertNotIn('Bashir', response.content.decode(), bad)
+
+    def test_each_student_gets_a_different_code(self):
+        self.assertNotEqual(self.link(self.amina).rsplit('/', 1)[1], self.link(self.bashir).rsplit('/', 1)[1])
+
+    def test_deleted_results_are_no_longer_shown(self):
+        url = self.link(self.amina)
+        StudentResult.objects.get(student=self.amina).soft_delete(self.admin, reason='test')
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_raising_the_link_version_invalidates_printed_links(self):
+        url = self.link(self.amina)
+        with self.settings(RESULT_LINK_VERSION=2):
+            self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_every_staff_report_card_carries_its_own_link(self):
+        self.client.force_login(self.teacher)
+        html = self.client.post('/bulk-result-view', {'form1': '1', 'session': self.session.id,
+                                                       'term': self.term.id, 'class': self.ss1.id}).content.decode()
+        from django.test import RequestFactory
+        from src.public_result import result_link
+        request = RequestFactory().get('/')
+        for student in (self.amina, self.bashir):
+            self.assertIn(result_link(request, student, self.ss1, self.session, self.term)['qr'], html)

@@ -37,6 +37,11 @@ SENIOR_SECTION = 'Secondary'
 # Print "No. in Class", "Class Position" and "Class Highest Average" on report
 # cards. ZMS report cards have not shown them.
 REPORT_SHOW_CLASS_POSITION = env_bool('DJANGO_REPORT_SHOW_CLASS_POSITION', False)
+# Address printed in report-card QR codes (e.g. https://results.example.com);
+# empty uses the address the cards were opened from.
+PUBLIC_BASE_URL = os.environ.get('DJANGO_PUBLIC_URL', '')
+# Raise to invalidate every result link already printed.
+RESULT_LINK_VERSION = int(os.environ.get('DJANGO_RESULT_LINK_VERSION', 1))
 
 # Production is served over HTTPS (nginx redirects plain HTTP), so cookies must
 # never travel over plain HTTP.

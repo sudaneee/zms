@@ -12,13 +12,11 @@ import hmac
 import secrets
 from io import BytesIO
 
-import segno
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from PIL import Image, UnidentifiedImageError
 
@@ -56,27 +54,26 @@ def student_token(approval, student_id):
     return hmac.new(settings.SECRET_KEY.encode(), message, hashlib.sha256).hexdigest()[:12]
 
 
-def verification_for(request, approval, student):
-    path = reverse('verify_result', args=[approval.code, student.id, student_token(approval, student.id)])
-    url = request.build_absolute_uri(path)
-    return {'url': url, 'qr': segno.make(url, error='m').svg_data_uri(scale=2, border=1)}
-
-
 def verify_result(request, code, student_id, token):
     """Public page behind the QR code on approved report cards."""
     approval = ResultApproval.objects.filter(code=code, kind=ResultApproval.HEAD).select_related(
         'student_class', 'session', 'term').first()
     valid = approval is not None and hmac.compare_digest(token, student_token(approval, student_id))
-    context = {'valid': valid}
+    context = {'valid': valid, 'show_class_position': settings.REPORT_SHOW_CLASS_POSITION}
     if valid:
-        from src.reports import build_class_report
-        approved = approval.snapshot.get('students', {}).get(str(student_id))
-        current, _, _ = build_class_report(approval.student_class, approval.session, approval.term)
-        now = next((r for s, r in current.items() if s.id == student_id), None)
-        context.update(approval=approval, approved=approved,
-                       unchanged=bool(approved and now and approved['total'] == now['total']
-                                      and approved['subjects'] == len(now['subjects'])))
+        context.update(approval=approval, **approval_status(approval, student_id))
     return render(request, 'src/verify.html', context)
+
+
+def approval_status(approval, student_id):
+    """What was approved for a student, and whether today's records still match it."""
+    from src.reports import build_class_report
+    approved = approval.snapshot.get('students', {}).get(str(student_id))
+    current, _, _ = build_class_report(approval.student_class, approval.session, approval.term)
+    now = next((r for s, r in current.items() if s.id == student_id), None)
+    unchanged = bool(approved and now and approved['total'] == now['total']
+                     and approved['subjects'] == len(now['subjects']))
+    return {'approved': approved, 'unchanged': unchanged}
 
 
 # ------------------------------------------------------------------ signatures

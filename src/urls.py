@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 
-from . import accounts, bulk, promotion, reports, review, signing, summary, trail, views
+from . import accounts, bulk, promotion, public_result, reports, review, signing, summary, trail, views
 
 
 urlpatterns = [
@@ -34,6 +34,7 @@ urlpatterns = [
     path('sign-results', signing.sign_results, name='sign_results'),
     path('my-signature', signing.my_signature, name='my_signature'),
     path('verify/<str:code>/<int:student_id>/<str:token>', signing.verify_result, name='verify_result'),
+    path('r/<str:payload>/<str:code>', public_result.public_result, name='public_result'),
     path('password-reset', accounts.PasswordResetRequest.as_view(), name='password_reset'),
     path('password-reset/sent', auth_views.PasswordResetDoneView.as_view(
         template_name='src/password_reset_done.html'), name='password_reset_done'),

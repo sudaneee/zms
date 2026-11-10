@@ -1,0 +1,17 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Result not available · {{ school_name }}</title>
+  <link rel="stylesheet" href="{% static 'src/report_card.css' %}">
+</head>
+<body>
+  <div class="status-banner" style="margin-top: 60px;">
+    <strong>{{ school_name }}</strong><br>
+    This result link is not valid or the result is no longer available. Scan the code on the printed report card
+    again, or contact the school.
+  </div>
+</body>
+</html>

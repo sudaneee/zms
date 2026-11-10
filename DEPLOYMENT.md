@@ -54,6 +54,8 @@ DJANGO_MEDIA_ROOT=/var/www/zms/media
 DJANGO_STATIC_ROOT=/var/www/zms/staticfiles
 DJANGO_BACKUP_DIR=/var/www/zms/backups
 DJANGO_SSL_REDIRECT=1
+# Address put in the report-card QR codes (must be the public https address)
+DJANGO_PUBLIC_URL=https://<domain>
 DJANGO_HSTS_SECONDS=31536000
 # Optional
 # DJANGO_SCHOOL_NAME=Zaria Merit School
@@ -64,6 +66,14 @@ DJANGO_HSTS_SECONDS=31536000
 ```
 
 Set `DJANGO_HSTS_SECONDS` only once HTTPS works for the domain and every subdomain.
+
+**Report-card QR codes.** Every card carries a QR code that opens that one
+student's result at `/r/<ids>/<code>` without logging in. The code is a
+128-bit HMAC of the student, class, session and term made with
+`DJANGO_SECRET_KEY`, so a link cannot be altered to show another student and
+cannot be guessed. Keep the secret key fixed: changing it invalidates every
+printed QR code. To withdraw all printed links on purpose (e.g. a lost batch
+of cards), set `DJANGO_RESULT_LINK_VERSION=2` (then 3, ...) and reprint.
 
 ### `zms.service`
 
