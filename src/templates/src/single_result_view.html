@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Report cards · {{ f_classs }} · {{ p_term }}</title>
-  <link rel="icon" href="{% static 'logo.jpg' %}">
+  {% include "src/_icons.html" %}
   <link rel="stylesheet" href="{% static 'src/report_card.css' %}">
   {% if public_view %}<meta name="robots" content="noindex, nofollow">{% endif %}
 </head>

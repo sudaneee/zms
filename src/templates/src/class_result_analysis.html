@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8">
   <title>Result analysis · {{ student_class.name }} · {{ term }}</title>
+  {% include "src/_icons.html" %}
   <style>
     @page { size: landscape; margin: 8mm; }
     * { box-sizing: border-box; }
     body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; margin: 0; padding: 14px; font-size: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .toolbar { margin-bottom: 12px; display: flex; gap: 8px; }
     .toolbar a, .toolbar button { font: 600 13px Arial, sans-serif; padding: 7px 14px; border: 1px solid #bbb; border-radius: 6px; background: #fff; color: #000; text-decoration: none; cursor: pointer; }
-    .toolbar button { background: #0e6b4f; border-color: #0e6b4f; color: #fff; }
+    .toolbar button { background: #615233; border-color: #615233; color: #fff; }
     .head { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 8px 4px; margin-bottom: 14px; font-size: 11px; line-height: 1.6; }
     .head .centre { text-align: center; }
     .head .centre strong { font-size: 15px; display: block; }
