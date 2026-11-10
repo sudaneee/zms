@@ -1,215 +1,155 @@
-{% load static %}
-<!doctype html>
+{% load static report_tags %}<!doctype html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!--meta name="viewport" content="width=device-width, initial-scale=1"-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report cards · {{ f_classs }} · {{ p_term }}</title>
+  <link rel="icon" href="{% static 'logo.jpg' %}">
+  <link rel="stylesheet" href="{% static 'src/report_card.css' %}">
+</head>
+<body>
+<div class="toolbar">
+  <div>
+    <strong>{{ results|length }} report card{{ results|length|pluralize }}</strong>
+    <span>{{ f_classs }} · {{ p_term }}</span>
+  </div>
+  <div class="toolbar-actions">
+    <button type="button" onclick="window.print()">Print</button>
+    {% if user.is_authenticated %}<a href="javascript:history.back()">Back</a>{% endif %}
+  </div>
+</div>
 
+{% for key, result in results.items %}{% with i=result.bhv %}
+<article class="card{% if result.subjects|length > 11 %} dense{% endif %}{% if result.subjects|length > 16 %} denser{% endif %}">
+  <header class="card-head">
+    {% if some_images.h_image %}<img class="head-img" src="{{ some_images.h_image.url }}" alt="{{ school_name }}">
+    {% else %}<div class="head-text">{{ school_name }}</div>{% endif %}
+  </header>
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+  <div class="title-bar">
+    <h1>Examination Report Sheet</h1>
+    <span>{{ result.sesss }} · {{ result.terms }}</span>
+  </div>
 
-    <link rel="stylesheet" type="text/css" href="{% static 'src/main.css' %}">
+  <section class="info">
+    <div class="info-item wide"><span class="k">Name</span><span class="v">{{ result.student }}</span></div>
+    <div class="info-item"><span class="k">Class</span><span class="v">{{ result.classs }}</span></div>
+    <div class="info-item"><span class="k">Session</span><span class="v">{{ result.sesss }}</span></div>
+    <div class="info-item"><span class="k">Term</span><span class="v">{{ result.terms }}</span></div>
+    {% if show_class_position %}
+    <div class="info-item"><span class="k">No. in Class</span><span class="v">{{ noInClass }}</span></div>
+    <div class="info-item"><span class="k">Class Position</span><span class="v">{{ result.c_pos }}</span></div>
+    <div class="info-item"><span class="k">Class Highest Average</span><span class="v">{{ classHighestAverage }}</span></div>
+    {% endif %}
+  </section>
 
-    <title>Hello, world!</title>
-  </head>
-    <body id="printarea" style="background: url('{% static 'bg.jpg' %}') no-repeat; background-size: cover;">
-<!--------------All result View ------------------>
+  <section class="block">
+    <h2>Scores</h2>
+    <table class="scores">
+      <thead>
+        <tr>
+          <th class="c">S/N</th><th>Subject</th>
+          <th class="c">First CA</th><th class="c">Second CA</th>
+          <th class="c">Exams</th><th class="c">Total</th>
+          <th class="c">Grade</th><th class="c">Position</th><th>Remark</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for subject in result.subjects %}
+        <tr{% if subject.exam_absent %} class="absent"{% elif subject.total < 40 %} class="fail"{% endif %}>
+          <td class="c muted">{{ forloop.counter }}</td>
+          <td class="subject">{{ subject.subject }}</td>
+          <td class="c">{{ subject.ca1 }}</td>
+          <td class="c">{{ subject.ca2 }}</td>
+          <td class="c">{{ subject.exam_display }}</td>
+          <td class="c strong">{{ subject.total }}</td>
+          <td class="c"><span class="grade g-{{ subject.grade }}">{{ subject.grade }}</span></td>
+          <td class="c">{{ subject.subject_position|ordinal }}</td>
+          <td class="remark">{{ subject|remark }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="totals">
+      <div><span class="k">Subjects</span><span class="v">{{ result.subjects|length }}</span></div>
+      <div><span class="k">Overall Total</span><span class="v">{{ result.overal_total }}</span></div>
+      <div class="highlight"><span class="k">Average</span><span class="v">{{ result.average }}</span></div>
+    </div>
+  </section>
 
+  <div class="two-col">
+    <section class="block">
+      <h2>Behavioural Assessment</h2>
+      <table class="behaviour">
+        <tbody>
+          <tr><th>Conduct</th><td class="c">{{ i.conduct }}</td><td class="muted">{{ i.conduct|rating }}</td></tr>
+          <tr><th>Punctuality</th><td class="c">{{ i.punctuality }}</td><td class="muted">{{ i.punctuality|rating }}</td></tr>
+          <tr><th>Dedication</th><td class="c">{{ i.dedication }}</td><td class="muted">{{ i.dedication|rating }}</td></tr>
+          <tr><th>Participation in Class</th><td class="c">{{ i.participation }}</td><td class="muted">{{ i.participation|rating }}</td></tr>
+          <tr><th>Hospitality</th><td class="c">{{ i.hospitality }}</td><td class="muted">{{ i.hospitality|rating }}</td></tr>
+          <tr><th>Neatness</th><td class="c">{{ i.neatness }}</td><td class="muted">{{ i.neatness|rating }}</td></tr>
+          <tr><th>Creativity</th><td class="c">{{ i.creativity }}</td><td class="muted">{{ i.creativity|rating }}</td></tr>
+          <tr><th>Physical Health</th><td class="c">{{ i.physical }}</td><td class="muted">{{ i.physical|rating }}</td></tr>
+        </tbody>
+      </table>
+      {% if not i %}<p class="note">No behavioural assessment recorded for this term.</p>{% endif %}
+    </section>
 
-{% for key, result in results.items %} {% with i=result.bhv %}
+    <section class="block key">
+      <h2>Key</h2>
+      <div class="key-group">
+        <h3>Grade</h3>
+        <ul class="key-list">
+          <li><b>A</b>70–100</li><li><b>B</b>60–69</li><li><b>C</b>50–59</li>
+          <li><b>D</b>45–49</li><li><b>E</b>40–44</li><li><b>F</b>00–39</li>
+        </ul>
+      </div>
+      <div class="key-group">
+        <h3>Remark</h3>
+        <ul class="key-list">
+          <li><b>70–100</b>Excellent</li><li><b>60–69</b>Good</li><li><b>50–59</b>Credit</li>
+          <li><b>40–49</b>Pass</li><li><b>00–39</b>Fail</li>
+        </ul>
+      </div>
+      <div class="key-group">
+        <h3>Behaviour guide</h3>
+        <ul class="key-list">
+          <li><b>5</b>Excellent</li><li><b>4</b>Good</li><li><b>3</b>Fair</li><li><b>2</b>Weak</li><li><b>1</b>Poor</li>
+        </ul>
+      </div>
+    </section>
+  </div>
 
-        <div class="card">
-            <div class="card-header">
-                <img style="width: 100%; height: 200px;" src="{{some_images.h_image.url}}">
-            </div>
-            <div class="card-body">
-                <table class="table table-bordered table-sm">
-                    <thead class="thead-light">
-                        <tr><th colspan="8" style="text-align: center; font-size: 30px;">Examination Report Sheet</th></tr>
-                        <tr><th colspan="8" style="text-align: center;">Student Information</th></tr>
-                        <tr>
-                        <th style="text-align: center;  background-color: white; font-size: 20px;">Name</th>
-                        <td style="text-align: center; font-size: 20px;">{{result.student}}</td>
-                        <th style="text-align: center; background-color: white; font-size: 20px;">Class</th>
-                        <td style="text-align: center; font-size: 20px;">{{result.classs}}</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th style="text-align: center; font-size: 20px;">Session</th>
-                            <td style="text-align: center; font-size: 20px;">{{result.sesss}}</td>
-                            <th style="text-align: center; font-size: 20px;">Term</th>
-                            <td style="text-align: center; font-size: 20px;">{{result.terms}}</td>
-                        </tr>
-                        {% if show_class_position %}
-                        <tr>
-                            <th style="text-align: center; font-size: 20px;">No. in Class</th>
-                            <td style="text-align: center; font-size: 20px;">{{noInClass}}</td>
-                            <th style="text-align: center; font-size: 20px;">Class Position</th>
-                            <td style="text-align: center; font-size: 20px;">{{result.c_pos}}</td>
-                        </tr>
-                        <tr>
-                            <th style="text-align: center; font-size: 20px;">Class Highest Average</th>
-                            <td style="text-align: center; font-size: 20px;" colspan="2">{{classHighestAverage}}</td>
-                        </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-                <table class="table table-bordered table-sm">
-                    <thead class="thead-light">
-                        <tr><th colspan="8" style="text-align: center;">Scores</th></tr>
-                        <tr>
-                        <th style="text-align: center; background-color: white;">S/N</th>
-                        <th style="text-align: center; background-color: white;">Subject</th>
-                        <th style="text-align: center; background-color: white;">First CA Score</th>
-                        <th style="text-align: center; background-color: white;">Second CA Score</th>
-                        <th style="text-align: center; background-color: white;">Exams Score</th>
-                        <th style="text-align: center; background-color: white;">Total Score</th>
-                        <th style="text-align: center; background-color: white;">Grade</th>
-                        <th style="text-align: center; background-color: white;">Position</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for subject in result.subjects %}
-                        <tr>
-                            <td style="text-align: center;">{{ forloop.counter }}</td>
-                            <td>{{ subject.subject }}</td>
-                            <td style="text-align: center; font-weight: bold;">{{ subject.ca1 }}</td>
-                            <td style="text-align: center;">{{ subject.ca2 }}</td>
-                            <td style="text-align: center;">{{ subject.exam_display }}</td>
-                            <td style="text-align: center;">{{ subject.total }}</td>
-                            <td style="text-align: center;">{{ subject.grade }}</td>
+  <section class="comment">
+    <span class="k">General Comment</span>
+    <p>{% general_comment result.average p_term %}</p>
+  </section>
 
-                            {% if subject.subject_position == 1 or subject.subject_position == 11 or subject.subject_position == 31 or subject.subject_position == 41 or subject.subject_position == 51 or subject.subject_position == 61 or subject.subject_position == 71 or subject.subject_position == 81 or subject.subject_position == 91  %}
-                                <td style="text-align: center;">{{ subject.subject_position }}st</td>
-                            {% elif subject.subject_position == 2 or subject.subject_position == 22 or subject.subject_position == 32 or subject.subject_position == 42 or subject.subject_position == 52 or subject.subject_position == 62 or subject.subject_position == 72 or subject.subject_position == 82 or subject.subject_position == 92 %}
-                                <td style="text-align: center;">{{ subject.subject_position }}nd</td>
-                            {% elif subject.subject_position == 3 or subject.subject_position == 23 or subject.subject_position == 33 or subject.subject_position == 43 or subject.subject_position == 53 or subject.subject_position == 63 or subject.subject_position == 73 or subject.subject_position == 83 or subject.subject_position == 93 %}
-                                <td style="text-align: center;">{{ subject.subject_position }}rd</td>
-                            {% else %}
-                                <td style="text-align: center;">{{ subject.subject_position }}th</td>
-                            {% endif %}
+  <section class="signatures">
+    <div class="sig">
+      <div class="sig-space">{% if approvals.teacher %}<img src="{{ approvals.teacher.signature }}" alt="signature">{% endif %}</div>
+      <div class="sig-line">{% if senior %}Form Master's Signature{% else %}Class Teacher's Signature{% endif %}</div>
+      {% if approvals.teacher %}<div class="sig-name">{{ approvals.teacher.signer_name }}</div>{% endif %}
+    </div>
+    <div class="sig date">
+      <div class="sig-space"><span>{{ date|date:"d-m-Y" }}</span></div>
+      <div class="sig-line">Date</div>
+    </div>
+    <div class="sig">
+      <div class="sig-space">{% if approvals.head %}<img src="{{ approvals.head.signature }}" alt="signature">{% endif %}</div>
+      <div class="sig-line">{% if senior %}Principal's Signature{% else %}Headteacher's Signature{% endif %}</div>
+      {% if approvals.head %}<div class="sig-name">{{ approvals.head.signer_name }}, {{ approvals.head.signed_at|date:"d-m-Y" }}</div>{% endif %}
+    </div>
+  </section>
 
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                          <td colspan="3"style="text-align: right;">Overal Total:</td>
-                          <td>{{ result.overal_total }}</td>
-                          <td style="text-align: right;">Average:</td>
-                          <td>{{ result.average }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-                <table class="table table-bordered table-sm">
-                    <thead class="thead-light">
-                        <tr><th colspan="8" style="text-align: center;">Behavioural Assessment</th></tr>
-                        <tr>
-                        <th style="text-align: center; background-color: white;">Conduct</th>
-                        <td style="text-align: center;">{{ i.conduct }}</td>
-                        <th style="text-align: center; background-color: white;">Punctuality</th>
-                        <td style="text-align: center;">{{ i.punctuality }}</td>
-                        <th style="text-align: center; background-color: white;">Dedication</th>
-                        <td style="text-align: center;">{{ i.dedication }}</td>
-                        <th style="text-align: center; background-color: white;">Participation in Class</th>
-                        <td style="text-align: center;">{{ i.participation }}</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th style="text-align: center; background-color: white;">Hospitality</th>
-                            <td style="text-align: center;">{{ i.hospitality }}</td>
-                            <th style="text-align: center; background-color: white;">Neatness</th>
-                            <td style="text-align: center;">{{ i.neatness }}</td>
-                            <th style="text-align: center; background-color: white;">Creativity</th>
-                            <td style="text-align: center;">{{ i.creativity }}</td>
-                            <th style="text-align: center; background-color: white;">Physical Health</th>
-                            <td style="text-align: center;">{{ i.physical }}</td>
-                        </tr>
-                    </tbody>
-                    <img style="height:200px; width: 100%;"src="{{some_images.g_image.url}}">
-                </table>
-
-
-
-                <table class="table table-bordered table-sm">
-                    <tbody>
-                        <tr>
-                            {% if p_term == "Third Term" %}
-                                <td style="text-align: center;">General Comment:</td>
-                                {% if result.average > 70 or result.average == 70  %}
-                                    <td style="text-align: center;">Excellent performance, keep it up. Promoted!</td>
-                                {% elif result.average > 60 or result.average == 60  %}
-                                <td style="text-align: center;">Very good performance, put more effort. Promoted!</td>
-                                {% elif result.average > 50 or result.average == 50  %}
-                                    <td style="text-align: center;">Good performance, you need to be more serious. Promoted!</td>
-                                {% elif result.average > 40 or result.average == 40  %}
-                                    <td style="text-align: center;">Fair performance, you need to be serious with your studies. Promoted on Trial</td>
-                                {% else %}
-                                    <td style="text-align: center;">Very weak performance, you need to be serious with your studies please. Repeated!</td>
-                                {% endif %}
-                            {% else %}
-                                <td style="text-align: center;">General Comment:</td>
-                                {% if result.average > 70 or result.average == 70  %}
-                                    <td style="text-align: center;">Excellent performance, keep it up</td>
-                                {% elif result.average > 60 or result.average == 60  %}
-                                <td style="text-align: center;">Very good performance, put more effort</td>
-                                {% elif result.average > 50 or result.average == 50  %}
-                                    <td style="text-align: center;">Good performance, you need to be more serious</td>
-                                {% elif result.average > 40 or result.average == 40  %}
-                                    <td style="text-align: center;">Fair performance, you need to be serious with your studies</td>
-                                {% else %}
-                                    <td style="text-align: center;">Very weak performance, you need to be serious with your studies please</td>
-                                {% endif %}
-
-                            {% endif %}
-                        </tr>
-                    </tbody>
-                </table>
-
-                <table class="table table-bordered table-sm">
-                    <tbody>
-                        <tr>
-                            <td style="text-align: center;">{% if approvals.teacher %}<img src="{{ approvals.teacher.signature }}" alt="signature" style="max-height: 55px; max-width: 200px;"><br><small>{{ approvals.teacher.signer_name }}</small>{% endif %}</td>
-                            <td style="text-align: center;">{{date|date:"d-m-Y"}}</td>
-                            <td style="text-align: center;">{% if approvals.head %}<img src="{{ approvals.head.signature }}" alt="signature" style="max-height: 55px; max-width: 200px;"><br><small>{{ approvals.head.signer_name }}, {{ approvals.head.signed_at|date:"d-m-Y" }}</small>{% endif %}</td>
-                        </tr>
-                        <tr>
-                            <td style="text-align: center;">{% if senior %}Form Master's Signature{% else %}Class Teacher's Signature{% endif %}</td>
-                            <td style="text-align: center;">Date</td>
-                            <td style="text-align: center;">{% if senior %}Principal's Signature{% else %}Headteacher's Signature{% endif %}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                {% if result.verify %}
-                <table class="table table-sm" style="border: none;">
-                    <tr>
-                        <td style="width: 110px; border: none;"><img src="{{ result.verify.qr }}" alt="verification QR code" style="width: 100px; height: 100px;"></td>
-                        <td style="vertical-align: middle; border: none; font-size: 12px;">Electronically approved by {{ approvals.head.signer_name }} on {{ approvals.head.signed_at|date:"d-m-Y" }}.<br>
-                            Scan the code or visit <span style="word-break: break-all;">{{ result.verify.url }}</span> to confirm this result is genuine.</td>
-                    </tr>
-                </table>
-                {% endif %}
-            </div>
-            </div>
-
-        </div>
-    {% endwith %}
-{% endfor %}
-
-
-
-
-
-    <!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-
-
-  </body>
+  {% if result.verify %}
+  <section class="verify">
+    <img src="{{ result.verify.qr }}" alt="verification QR code">
+    <p>Electronically approved by {{ approvals.head.signer_name }} on {{ approvals.head.signed_at|date:"d-m-Y" }}.<br>
+      Scan the code or visit <span class="url">{{ result.verify.url }}</span> to confirm this result is genuine.</p>
+  </section>
+  {% endif %}
+</article>
+{% endwith %}{% endfor %}
+</body>
 </html>

@@ -1088,3 +1088,26 @@ class EvaluationTests(Fixture):
         self.assertEqual(len(self.client.get('/teacher-evaulation-form/evaluation-view').context['evaluations']), 0)
         self.client.force_login(self.admin)
         self.assertEqual(len(self.client.get('/teacher-evaulation-form/evaluation-view').context['evaluations']), 1)
+
+
+class ReportCardWordingTests(TestCase):
+    def test_general_comment_matches_the_old_cards(self):
+        from src.templatetags.report_tags import general_comment
+        self.assertEqual(general_comment(70, 'First Term'), 'Excellent performance, keep it up')
+        self.assertEqual(general_comment(69.99, 'Third Term'), 'Very good performance, put more effort. Promoted!')
+        self.assertEqual(general_comment(50, 'Third Term'), 'Good performance, you need to be more serious. Promoted!')
+        self.assertEqual(general_comment(40, 'Third Term'),
+                         'Fair performance, you need to be serious with your studies. Promoted on Trial')
+        self.assertEqual(general_comment(39.9, 'Second Term'),
+                         'Very weak performance, you need to be serious with your studies please')
+        self.assertEqual(general_comment(10, 'Third Term'),
+                         'Very weak performance, you need to be serious with your studies please. Repeated!')
+
+    def test_ordinal_and_remark(self):
+        from src.templatetags.report_tags import ordinal, remark
+        self.assertEqual([ordinal(n) for n in (1, 2, 3, 4, 11, 12, 13, 21, 22, 61, 111)],
+                         ['1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '61st', '111th'])
+        r = StudentResult(total=45, exam_absent=False)
+        self.assertEqual(remark(r), 'Pass')
+        r.exam_absent = True
+        self.assertEqual(remark(r), 'Absent')
