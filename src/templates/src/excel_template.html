@@ -14,7 +14,7 @@
                     <select class="form-control" name="class">
                         <option>Class</option>
                         {% for i in classes %}
-                            <option>{{ i.class_name }}</option>
+                            <option value="{{i.id}}">{{ i.class_name }}</option>
                         {% endfor %}
                     </select>
                 </div>

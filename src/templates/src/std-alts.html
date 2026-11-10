@@ -1,199 +1,71 @@
 {% extends "src/index.html" %}
+{% block title %}Manage students{% endblock %}
+{% block crumb %}Students &amp; sheets{% endblock %}
 {% block content %}
-
-<!----------------Styles--------------------------->
-	<style type="text/css">
-		.container {
-		  height: 100px;
-		  position: relative;
-		}
-
-		.center {
-		  margin: 0;
-		  position: absolute;
-		  top: 25%;
-		  left: 50%;
-
-		}
-
-		h1, h2, h3, h4, h5, h6 {
-			color: black;
-			text-align: center;
-		}
-		.form-control{
-			color: black;
-		}
-
-	</style>
-
-<!-----------------------------Student Alts------------------------->
-<div class="row">
-
-	<!------------------------------------Create New Students---------------------------->
-	<div class="col-md-12">
-		<div>
-			<h4> Creating New Student </h4>
-			<h6> Please Enter Student Name and Select Class</h6>
-		</div>
-		<form name="form3" method="POST">
-			{% csrf_token %}
-			 	<div class="row" style="padding-right: 10px;">
-				    <div class="col">
-						<input type="text" class="form-control" placeholder = "Enter Student Name" name="name" style="text-align: center;">
-					</div>
-				    <div class="col">
-	                    <select class="form-control" name="class">
-	                    	<option value={{student.student_class.id}}>{{student.student_class}}</option>
-	                        {% for i in classes %}
-	                            <option value="{{i.id}}">{{ i.class_name }}</option>
-	                        {% endfor %}
-	                    </select>
-					</div>
-					<button name="add" type="submit" class="btn btn-primary">Add</button>
-				</div>
-		</form>
-	</div>
-
-	<!--------------------------Update and Delete of Students---------------------->
-	<div class="col-md-12" style="margin-top: 20px;">
-	{% if messages %}
-	  {% for msg in messages %}
-	    <div class="alert alert-info alert-dismissable">
-	      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-	      {{msg.message}}
-	    </div>
-	  {% endfor %}
-	{% endif %}
-		<div>
-			<h4> Update Students Info</h4>
-			<h6> Please Select Class</h6>
-		</div>
-		<div class="main">
-			<form name="form1" method="POST">
-				{% csrf_token %}
-			 	 <div class="row" style="padding-right: 10px;">
-				    <div class="col">
-	                    <select class="form-control" name="class">
-	                    	<option>Class</option>
-	                        {% for i in classes %}
-	                            <option value="{{i.id}}">{{ i.class_name }}</option>
-	                        {% endfor %}
-	                    </select>
-					</div>
-				    <button name="form1" type="submit" class="btn btn-primary">GET</button>
-				</div>
-			</form>
-		</div>
-
-
-	{% if request.method == 'POST' and "form1" in request.POST %}
-	<div style="padding-top: 10px;">
-		<div class="oho">
-			{% for i in student %}
-				<form name="form2" method="POST">
-					{% csrf_token %}
-					 	<div class="row" style="padding-right: 10px;">
-						    <div class="col">
-								<input type="number" class="form-control" value ="{{i.id}}" name="ID" style="text-align: center;">
-							</div>
-						    <div class="col">
-								<input type="text" class="form-control" value ="{{i.student_name}}" name="name" style="text-align: center;">
-							</div>
-						    <div class="col">
-			                    <select class="form-control" name="class">
-			                    	<option value="{{i.student_class.id}}">{{i.student_class}}</option>
-			                        {% for i in classes %}
-			                            <option value="{{i.id}}">{{ i.class_name }}</option>
-			                        {% endfor %}
-			                    </select>
-							</div>
-							<div style="padding-top: 10px; padding-left: 10px;">
-								<button style="background-color: red;" type="submit" name="delete_items" value="{{ i.id }}" class="btn btn-primary">Delete</button>
-							</div>
-						    <div style="padding-top: 10px; padding-left: 10px;">
-								<button type="submit" name="update_items" value="{{ i.id }}" class="btn btn-primary">Update</button>
-							</div>
-						</div>
-				</form>
-			{% endfor %}
-		</div>
-	</div>
-		{% endif %}
-
-	{% if request.method == 'POST' and "delete_items" in request.POST or "update_items" in request.POST %}
-	<div style="padding-top: 10px;">
-		<div class="oho">
-			{% for i in student %}
-				<form name="form2" method="POST">
-					{% csrf_token %}
-					 	<div class="row" style="padding-right: 10px;">
-						    <div class="col">
-								<input type="number" class="form-control" value ="{{i.id}}" name="ID" style="text-align: center;">
-							</div>
-						    <div class="col">
-								<input type="text" class="form-control" value ="{{i.student_name}}" name="name" style="text-align: center;">
-							</div>
-						    <div class="col">
-			                    <select class="form-control" name="class">
-			                    	<option value="{{i.student_class.id}}">{{i.student_class}}</option>
-			                        {% for i in classes %}
-			                            <option value="{{i.id}}">{{ i.class_name }}</option>
-			                        {% endfor %}
-			                    </select>
-							</div>
-							<div style="padding-top: 10px; padding-left: 10px;">
-								<button style="background-color: red;" type="submit" name="delete_items" value="{{ i.id }}" class="btn btn-primary">Delete</button>
-							</div>
-						    <div style="padding-top: 10px; padding-left: 10px;">
-								<button type="submit" name="update_items" value="{{ i.id }}" class="btn btn-primary">Update</button>
-							</div>
-						</div>
-				</form>
-			{% endfor %}
-		</div>
-	</div>
-		{% endif %}
-	</div>
-
-<!-----------------------------------Changing Student Class---------------------------->
-	<div class="col-md-12">
-		<div>
-			<h4> Changing Student Class </h4>
-
-		</div>
-		<form name="form4" method="POST">
-			{% csrf_token %}
-			 	<div class="row" style="padding-right: 10px;">
-				    <div class="col">
-	                    <select class="form-control" name="session">
-	                    	<option>Session</option>
-	                        {% for i in sessions %}
-	                            <option value="{{i.id}}">{{ i.session_name }}</option>
-	                        {% endfor %}
-	                    </select>
-					</div>
-				    <div class="col">
-	                    <select class="form-control" name="current_class">
-	                    	<option>Current Class</option>
-	                        {% for i in classes %}
-	                            <option value="{{i.id}}">{{ i.class_name }}</option>
-	                        {% endfor %}
-	                    </select>
-					</div>
-				    <div class="col">
-	                    <select class="form-control" name="promotion_class">
-	                    	<option>Promotion Class</option>
-	                        {% for i in classes %}
-	                            <option value="{{i.id}}">{{ i.class_name }}</option>
-	                        {% endfor %}
-	                    </select>
-					</div>
-					<button name="save" type="submit" class="btn btn-primary">Save</button>
-				</div>
-		</form>
-	</div>
-
+<div class="page-header">
+  <div>
+    <h1>Manage students</h1>
+    <p>Add a single student, or open a class to rename students, move them to another class, or remove records entered by mistake.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'std_create' %}" class="btn btn-light"><i class="fas fa-file-upload"></i>Upload many students</a>
+    {% if can.promote %}<a href="{% url 'promote' %}" class="btn btn-light"><i class="fas fa-level-up-alt"></i>Promote a class</a>{% endif %}
+  </div>
 </div>
 
-{% endblock content %}
+<div class="row">
+  <div class="col-lg-5">
+    <form name="form3" method="POST" class="panel">
+      {% csrf_token %}
+      <div class="panel-header"><h2>Add a student</h2></div>
+      <div class="panel-body">
+        <div class="form-group"><label for="f-name">Full name</label><input type="text" class="form-control" id="f-name" name="name" required></div>
+        <div class="form-row">{% include "src/_f_class.html" %}</div>
+      </div>
+      <div class="panel-footer"><button name="add" type="submit" class="btn btn-primary"><i class="fas fa-user-plus"></i>Add student</button></div>
+    </form>
+  </div>
+  <div class="col-lg-7">
+    <form name="form1" method="POST" class="panel">
+      {% csrf_token %}
+      <div class="panel-header"><h2>Open a class</h2></div>
+      <div class="panel-body"><div class="form-row">{% include "src/_f_class.html" %}</div></div>
+      <div class="panel-footer"><button name="form1" type="submit" class="btn btn-primary"><i class="fas fa-users"></i>Show students</button></div>
+    </form>
+  </div>
+</div>
 
+{% if student is not None and request.method == 'POST' %}{% if "form1" in request.POST or "delete_items" in request.POST or "update_items" in request.POST %}
+<div class="panel">
+  <div class="panel-header"><h2>Students</h2><span class="hint">{{ student|length }} in class</span></div>
+  <div class="table-wrap">
+    <table class="table table-app">
+      <thead><tr><th style="width: 90px">ID</th><th>Name</th><th style="width: 30%">Class</th><th style="width: 190px"></th></tr></thead>
+      <tbody>
+      {% for i in student %}
+        <tr>
+          <td class="muted">{{ i.id }}</td>
+          <td><input type="text" class="form-control form-control-sm" form="st{{ i.id }}" value="{{ i.student_name }}" name="name" required></td>
+          <td>
+            <select class="custom-select custom-select-sm" form="st{{ i.id }}" name="class">
+              <option value="{{ i.student_class.id }}">{{ i.student_class }}</option>
+              {% for c in classes %}{% if c.id != i.student_class.id %}<option value="{{ c.id }}">{{ c.class_name }}</option>{% endif %}{% endfor %}
+            </select>
+          </td>
+          <td class="text-right text-nowrap">
+            <form id="st{{ i.id }}" method="POST" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" name="update_items" value="{{ i.id }}" class="btn btn-sm btn-light"><i class="fas fa-save"></i>Save</button>
+              <button type="submit" name="delete_items" value="{{ i.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete {{ i.student_name|escapejs }}? Students with results cannot be deleted; others can be restored from the Recycle Bin.');"><i class="fas fa-trash-alt"></i>Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4"><div class="empty-state"><i class="fas fa-user-slash"></i>No students in this class.</div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}{% endif %}
+{% endblock %}

@@ -24,9 +24,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('src.urls')),
     path('teacher-evaulation-form/', include('eval.urls')),
-    # path('fees-record/', include('fees.urls')),
-
 ]
 admin.site.site_title = "Admin"
 admin.site.site_header = "RynoB Admin Panel"
+# Bulk "delete selected" removes many records in one click with no way back;
+# records must be deleted one at a time so each delete is confirmed and logged.
+admin.site.disable_action('delete_selected')
 urlpatterns = urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

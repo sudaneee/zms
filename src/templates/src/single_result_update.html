@@ -1,122 +1,42 @@
 {% extends "src/index.html" %}
+{% block title %}Update one student{% endblock %}
+{% block crumb %}Results{% endblock %}
 {% block content %}
-	<style type="text/css">
-		.container {
-		  height: 100px;
-		  position: relative;
-		}
+<div class="page-header">
+  <div>
+    <h1>Update one student's result</h1>
+    <p>Find a student's result for one subject by their student ID (the number in the first column of the score sheet).</p>
+  </div>
+</div>
 
-		.center {
-		  margin: 0;
-		  position: absolute;
-		  top: 25%;
-		  left: 50%;
+<form name="form1" method="POST" class="panel">
+  {% csrf_token %}
+  <div class="panel-body">
+    <div class="form-row">
+      {% include "src/_f_session.html" %}{% include "src/_f_term.html" %}{% include "src/_f_class.html" %}{% include "src/_f_subject.html" %}
+      <div class="form-group col-md-2">
+        <label for="f-student">Student ID</label>
+        <input type="number" class="form-control" name="student_id" id="f-student" value="{{ student_id|default:'' }}" required>
+      </div>
+    </div>
+  </div>
+  <div class="panel-footer"><button name="form1" type="submit" class="btn btn-primary"><i class="fas fa-search"></i>Find result</button></div>
+</form>
 
-		}
-
-		h1, h2, h3, h4, h5, h6 {
-			color: black;
-			text-align: center;
-		}
-		.form-control{
-			color: black;
-		}
-	</style>
-	<div>
-		<h1> Update a Student Result </h1>
-		<h4> Please Select Session, Term, Class and Subject you wish to upload for </h4>
-	</div>
-	<div class="main">
-		<form name="form1" method="POST">
-			{% csrf_token %}
-		 	 <div  style="padding-right: 150px; padding-left: 150px;">
-			    <div class="form-group">
-			        <select class="form-control" name="session">
-			        	<option>Session</option>
-			        	{% for i in sessions %}
-				        <option>{{i.session_name}}</option>
-
-				        {% endfor %}
-				    </select>
-			    </div>
-			    <div class="form-group">
-			        <select class="form-control" name="term">
-			        	<option>Term</option>
-			        	{% for i in terms %}
-				        <option>{{i.term_name}}</option>
-				        {% endfor %}
-				    </select>
-			    </div>
-
-
-			    <div class="form-group">
-			        <select class="form-control" name="class">
-			        	<option>Class</option>
-				        {% for i in classes %}
-				        	<option>{{ i.class_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <div class="form-group" >
-			        <select class="form-control" name="subject">
-			        	<option>Subject</option>
-				        {% for i in subjects %}
-					    	<option>{{ i.subject_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <div class="form-group" >
-			    	<h7>Student ID:</h7>
-					<input type="numer" name="student_id">
-					<button name="form1" type="submit" class="btn btn-primary">GET</button>
-			    </div>
-
-			</div>
-		</form>
-	</div>
-
-
-{% if request.method == 'POST' and "form1" in request.POST %}
-
-	<div class="row" style="padding-right: 10px;">
-		<div class="col">
-			<h6 style="width: 350px;"> Name </h6>
-		</div>
-		<div class="col">
-			<h6> First C.A </h6>
-		</div>
-		<div class="col">
-			<h6> Second C.A </h6>
-		</div>
-		<div class="col">
-			<h6> Exams </h6>
-		</div>
-	</div>
-
-	<form name="form2" method="POST">
-		{% csrf_token %}
-
-	 	 <div class="row" style="padding-right: 10px; padding-left: 10px;">
-		    <div class="col">
-				<input type="text" class="form-control" value="{{get_student.student}}" name="name" style="width: 350px;">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value={{get_student.ca1}} name="ca1" style="text-align: center;">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value={{get_student.ca2}} name="ca2" style="text-align: center;">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value={{get_student.exams}} name="exams" style="text-align: center;">
-		    </div>
-		</div>
-		<div class="container">
-		  <div class="center">
-		    <button name ="form2" type="submit" class="btn btn-primary">Update</button>
-		  </div>
-		</div>
-	</form>
+{% if sel and get_student %}
+<form name="form2" method="POST" class="panel">
+  {% csrf_token %}
+  <div class="panel-header"><h2>{{ get_student.student }}</h2></div>
+  <div class="panel-body">
+    {% include "src/_selection.html" %}
+    <input type="hidden" name="result_id" value="{{ get_student.id }}">
+    <div class="form-row" style="max-width: 520px">
+      <div class="form-group col"><label>1st C.A <span class="muted">/20</span></label><input type="number" class="form-control" value="{{ get_student.ca1 }}" name="ca1"></div>
+      <div class="form-group col"><label>2nd C.A <span class="muted">/20</span></label><input type="number" class="form-control" value="{{ get_student.ca2 }}" name="ca2"></div>
+      <div class="form-group col"><label>Exams <span class="muted">/60 or ABS</span></label><input type="text" class="form-control" maxlength="3" value="{{ get_student.exam_display }}" name="exams"></div>
+    </div>
+  </div>
+  <div class="panel-footer"><button name="form2" type="submit" class="btn btn-primary"><i class="fas fa-save"></i>Save</button></div>
+</form>
 {% endif %}
-
-{% endblock content %}
-
+{% endblock %}

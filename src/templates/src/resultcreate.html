@@ -1,136 +1,57 @@
 {% extends "src/index.html" %}
+{% block title %}Enter results{% endblock %}
+{% block crumb %}Results{% endblock %}
 {% block content %}
+<div class="page-header">
+  <div>
+    <h1>Enter results</h1>
+    <p>Choose the class and subject, then type each student's scores. 1st C.A and 2nd C.A are out of 20, Exams out of 60. Type <strong>ABS</strong> in Exams for a student who was absent.</p>
+  </div>
+</div>
 
-<!----------------Styles--------------------------->
-	<style type="text/css">
-		.container {
-		  height: 100px;
-		  position: relative;
-		}
-
-		.center {
-		  margin: 0;
-		  position: absolute;
-		  top: 25%;
-		  left: 50%;
-
-		}
-
-		h1, h2, h3, h4, h5, h6 {
-			color: black;
-			text-align: center;
-		}
-		.form-control{
-			color: black;
-		}
-	</style>
-
-
-<!-----------------------------htlm code------------------------->
-	<div>
-		<h1> Upload Result </h1>
-		<h4> Please Select Session, Term, Class and Subject you wish to upload for </h4>
-	</div>
-	<div class="main">
-		<form name="form1" method="POST">
-			{% csrf_token %}
-		 	 <div class="row" style="padding-right: 10px;">
-			    <div class="col">
-			        <select class="form-control" name="session">
-			        	<option>Session</option>
-
-			        	{% for i in sessions %}
-				        <option>{{i.session_name}}</option>
-
-				        {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="term">
-			        	<option>Term</option>
-			        	{% for i in terms %}
-				        <option>{{i.term_name}}</option>
-				        {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="class">
-			        	<option>Class</option>
-				        {% for i in classes %}
-				        	<option>{{ i.class_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="subject">
-			        	<option>Subject</option>
-				        {% for i in subjects %}
-					    	<option>{{ i.subject_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <button name="form1" type="submit" class="btn btn-primary">GET</button>
-			</div>
-		</form>
-	</div>
-
-{% if messages %}
-  {% for msg in messages %}
-    <div class="alert alert-info alert-dismissable">
-      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-      {{msg.message}}
+<form name="form1" method="POST" class="panel">
+  {% csrf_token %}
+  <div class="panel-body">
+    <div class="form-row">
+      {% include "src/_f_session.html" %}{% include "src/_f_term.html" %}{% include "src/_f_class.html" %}{% include "src/_f_subject.html" %}
     </div>
-  {% endfor %}
+  </div>
+  <div class="panel-footer"><button name="form1" type="submit" class="btn btn-primary"><i class="fas fa-users"></i>Load students</button></div>
+</form>
+
+{% if sel %}
+<form name="form2" method="POST" class="panel">
+  {% csrf_token %}
+  <div class="panel-header">
+    <h2>Scores</h2>
+    <span class="hint">{{ students|length }} students</span>
+  </div>
+  <div class="panel-body pb-0">{% include "src/_selection.html" %}</div>
+  {% if students %}
+  <div class="table-scroll">
+    <table class="table table-app">
+      <thead><tr><th style="width: 48px">#</th><th>Student</th><th class="text-center">1st C.A <span class="muted">/20</span></th><th class="text-center">2nd C.A <span class="muted">/20</span></th><th class="text-center">Exams <span class="muted">/60</span></th></tr></thead>
+      <tbody>
+      {% for i in students %}
+        <tr>
+          <td class="muted">{{ forloop.counter }}</td>
+          <td>
+            <input type="hidden" name="student_id" value="{{ i.id }}">
+            <input type="hidden" name="name" value="{{ i.student_name }}">
+            {{ i.student_name }}
+          </td>
+          <td class="text-center"><input type="number" class="form-control form-control-sm score-input d-inline-block" min="0" max="20" value="{{ i.typed.ca1|default:0 }}" name="ca1"></td>
+          <td class="text-center"><input type="number" class="form-control form-control-sm score-input d-inline-block" min="0" max="20" value="{{ i.typed.ca2|default:0 }}" name="ca2"></td>
+          <td class="text-center"><input type="text" class="form-control form-control-sm score-input d-inline-block" maxlength="3" value="{{ i.typed.exams|default:0 }}" name="exams"></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel-footer"><button name="form2" type="submit" class="btn btn-primary"><i class="fas fa-save"></i>Save results</button></div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-user-slash"></i>No active students in this class.</div>
+  {% endif %}
+</form>
 {% endif %}
-
-{% if request.method == 'POST' and "form1" in request.POST %}
-	<div>
-		<h4> Please Insert the students Results approprietly </h4>
-	</div>
-	<div class="row" style="padding-right: 10px;">
-
-		<div class="col">
-			<h6 style="width: 500px;"> Name </h6>
-		</div>
-		<div class="col">
-			<h6> First C.A </h6>
-		</div>
-		<div class="col">
-			<h6> Second C.A </h6>
-		</div>
-		<div class="col">
-			<h6> Exams </h6>
-		</div>
-	</div>
-
-	<form name="form2" method="POST">
-		{% csrf_token %}
-		{% for i in students %}
-	 	 <div class="row" style="padding-right: 10px; padding-left: 10px;">
-
-		    <div class="col">
-				<input type="text" class="form-control" value="{{i.student_name}}" name="name" style="width: 500px;">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value=0 name="ca1" style="text-align: center;">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value=0 name="ca2" style="text-align: center;">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value=0 name="exams" style="text-align: center;">
-		    </div>
-		</div>
-		{% endfor %}
-		<div class="container">
-		  <div class="center">
-		    <button name ="form2" type="submit" class="btn btn-primary">Upload</button>
-		  </div>
-		</div>
-	</form>
-
-
-{% endif %}
-
-{% endblock content %}
-
+{% endblock %}

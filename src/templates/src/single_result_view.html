@@ -19,8 +19,7 @@
 <!--------------All result View ------------------>
 
 
-{% for key, result in results.items %} {% for i in bhv %}
-    {% if forloop.counter == forloop.parentloop.counter %}
+{% for key, result in results.items %} {% with i=result.bhv %}
 
         <div class="card">
             <div class="card-header">
@@ -40,11 +39,23 @@
                     </thead>
                     <tbody>
                         <tr>
-                        <th style="text-align: center; font-size: 20px;">Session</th>
-                        <td style="text-align: center; font-size: 20px;">{{i.session}}</td>
-                        <th style="text-align: center; font-size: 20px;">Term</th>
-                        <td style="text-align: center; font-size: 20px;">{{i.term}}</td>
+                            <th style="text-align: center; font-size: 20px;">Session</th>
+                            <td style="text-align: center; font-size: 20px;">{{result.sesss}}</td>
+                            <th style="text-align: center; font-size: 20px;">Term</th>
+                            <td style="text-align: center; font-size: 20px;">{{result.terms}}</td>
                         </tr>
+                        {% if show_class_position %}
+                        <tr>
+                            <th style="text-align: center; font-size: 20px;">No. in Class</th>
+                            <td style="text-align: center; font-size: 20px;">{{noInClass}}</td>
+                            <th style="text-align: center; font-size: 20px;">Class Position</th>
+                            <td style="text-align: center; font-size: 20px;">{{result.c_pos}}</td>
+                        </tr>
+                        <tr>
+                            <th style="text-align: center; font-size: 20px;">Class Highest Average</th>
+                            <td style="text-align: center; font-size: 20px;" colspan="2">{{classHighestAverage}}</td>
+                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
                 <table class="table table-bordered table-sm">
@@ -68,7 +79,7 @@
                             <td>{{ subject.subject }}</td>
                             <td style="text-align: center; font-weight: bold;">{{ subject.ca1 }}</td>
                             <td style="text-align: center;">{{ subject.ca2 }}</td>
-                            <td style="text-align: center;">{{ subject.exams }}</td>
+                            <td style="text-align: center;">{{ subject.exam_display }}</td>
                             <td style="text-align: center;">{{ subject.total }}</td>
                             <td style="text-align: center;">{{ subject.grade }}</td>
 
@@ -163,37 +174,32 @@
                 <table class="table table-bordered table-sm">
                     <tbody>
                         <tr>
-                            <td style="text-align: center;"></td>
+                            <td style="text-align: center;">{% if approvals.teacher %}<img src="{{ approvals.teacher.signature }}" alt="signature" style="max-height: 55px; max-width: 200px;"><br><small>{{ approvals.teacher.signer_name }}</small>{% endif %}</td>
                             <td style="text-align: center;">{{date|date:"d-m-Y"}}</td>
-                            <td style="text-align: center;"></td>
+                            <td style="text-align: center;">{% if approvals.head %}<img src="{{ approvals.head.signature }}" alt="signature" style="max-height: 55px; max-width: 200px;"><br><small>{{ approvals.head.signer_name }}, {{ approvals.head.signed_at|date:"d-m-Y" }}</small>{% endif %}</td>
                         </tr>
                         <tr>
-                            <td style="text-align: center;">
-                                {% if f_classs|slice:":7" == "Nursery" or f_classs|slice:":7" == "Primary" %}
-                                    Class Teacher's Signature
-                                {% else %}
-                                    Form Master's Signature
-                                {% endif %}
-                            </td>
-
+                            <td style="text-align: center;">{% if senior %}Form Master's Signature{% else %}Class Teacher's Signature{% endif %}</td>
                             <td style="text-align: center;">Date</td>
-
-                            <td style="text-align: center;">
-                                {% if f_classs|slice:":7" == "Nursery" or f_classs|slice:":7" == "Primary" %}
-                                    Headteacher's Signature
-                                {% else %}
-                                    Principal's Signature
-                                {% endif %}
-                            </td>
+                            <td style="text-align: center;">{% if senior %}Principal's Signature{% else %}Headteacher's Signature{% endif %}</td>
                         </tr>
                     </tbody>
                 </table>
+                {% if result.verify %}
+                <table class="table table-sm" style="border: none;">
+                    <tr>
+                        <td style="width: 110px; border: none;"><img src="{{ result.verify.qr }}" alt="verification QR code" style="width: 100px; height: 100px;"></td>
+                        <td style="vertical-align: middle; border: none; font-size: 12px;">Electronically approved by {{ approvals.head.signer_name }} on {{ approvals.head.signed_at|date:"d-m-Y" }}.<br>
+                            Scan the code or visit <span style="word-break: break-all;">{{ result.verify.url }}</span> to confirm this result is genuine.</td>
+                    </tr>
+                </table>
+                {% endif %}
             </div>
             </div>
 
         </div>
-    {% endif %}
-{% endfor %} {% endfor %}
+    {% endwith %}
+{% endfor %}
 
 
 

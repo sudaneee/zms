@@ -1,64 +1,27 @@
-{% extends 'src/index.html' %}
+{% extends "src/index.html" %}
+{% block title %}Upload assessments{% endblock %}
+{% block crumb %}Behaviour{% endblock %}
 {% block content %}
+{% url 'bhvxl-missed' as missed_url %}
+<div class="page-header">
+  <div>
+    {% if request.path == missed_url %}
+    <h1>Add missed assessments</h1>
+    <p>Upload assessments for students who were left out of the class's earlier upload.</p>
+    {% else %}
+    <h1>Upload assessments from Excel</h1>
+    <p>Upload the completed behavioural assessment sheet for one class. Each score must be from 0 to 5.</p>
+    {% endif %}
+  </div>
+  <div class="page-actions"><a href="{% url 'behav_sheet' %}" class="btn btn-light"><i class="fas fa-file-download"></i>Download assessment sheet</a></div>
+</div>
 
-{% if messages %}
-  {% for msg in messages %}
-    <div class="alert alert-info alert-dismissable">
-      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-      {{msg.message}}
-    </div>
-  {% endfor %}
-{% endif %}
-
-	<div>
-		<h1> Upload Student Behavoural Assessment Using Excel </h1>
-		<h4> Please Select Session, Term, Class, Subject and a file you wish to upload  </h4>
-	</div>
-
-	<div class="main">
-
-        <form name ="form" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-		    <div class="form-group">
-		        <select class="form-control" name="session">
-		        	<option>Session</option>
-		        	<option>2023/2024</option>
-		        	<option>2024/2025</option>
-		        	<option>2025/2026</option>
-
-		        	<!--{% for i in sessions %}-->
-			        <!--    <option>{{ i.session_name }}</option>-->
-			        <!--{% endfor %}-->
-			    </select>
-		    </div>
-		    <div class="form-group" >
-				 <select class="form-control" name="term">
-		        	<option>Term</option>
-		        	<option>First Term</option>
-		        	<option>Second Term</option>
-		        	<option>Third Term</option>
-		        	<!--{% for i in terms %}-->
-			        <!--    <option>{{i.term_name}}</option>-->
-
-			        <!--{% endfor %}-->
-			    </select>
-            </div>
-		    <div class="form-group" >
-		        <select class="form-control" name="class">
-		        	<option>Class</option>
-			        {% for i in classes %}
-			        	<option>{{ i.class_name }}</option>
-				    {% endfor %}
-			    </select>
-            </div>
-            <input type="file"
-                   title="Upload excel file"
-                   name="excel_file"
-                   style="border: 1px solid black; padding: 5px;"
-                   required="required">
-			<button name="form" type="submit" class="btn btn-primary">Upload</button>
-        </form>
-	</div>
-
-
-{% endblock content %}
+<form method="post" enctype="multipart/form-data" class="panel">
+  {% csrf_token %}
+  <div class="panel-body">
+    <div class="form-row">{% include "src/_f_session.html" %}{% include "src/_f_term.html" %}{% include "src/_f_class.html" %}</div>
+    {% include "src/_f_file.html" %}
+  </div>
+  <div class="panel-footer"><button name="form" type="submit" class="btn btn-primary"><i class="fas fa-upload"></i>Upload assessments</button></div>
+</form>
+{% endblock %}

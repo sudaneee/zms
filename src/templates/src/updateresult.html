@@ -1,129 +1,47 @@
 {% extends "src/index.html" %}
+{% block title %}Update results{% endblock %}
+{% block crumb %}Results{% endblock %}
 {% block content %}
+<div class="page-header">
+  <div>
+    <h1>Update results</h1>
+    <p>Load a class and subject, correct any scores, and save. Type <strong>ABS</strong> in Exams for a student who was absent. Totals and subject positions update automatically.</p>
+  </div>
+  <div class="page-actions"><a href="{% url 'result_excel_update' %}" class="btn btn-light"><i class="fas fa-file-excel"></i>Update with Excel instead</a></div>
+</div>
 
-<!----------------Styles--------------------------->
-	<style type="text/css">
-		.container {
-		  height: 100px;
-		  position: relative;
-		}
-
-		.center {
-		  margin: 0;
-		  position: absolute;
-		  top: 25%;
-		  left: 50%;
-
-		}
-
-		h1, h2, h3, h4, h5, h6 {
-			color: black;
-			text-align: center;
-		}
-		.form-control{
-			color: black;
-		}
-	</style>
-	<div>
-		<h1> Update Result </h1>
-		<h4> Please Select Session, Term, Class and Subject you wish to update for </h4>
-	</div>
-	<div class="main">
-		<form name="form1" method="POST">
-			{% csrf_token %}
-		 	 <div class="row" style="padding-right: 10px;">
-			    <div class="col">
-			        <select class="form-control" name="session">
-			        	<option>Session</option>
-			        	{% for i in sessions %}
-				        <option>{{i.session_name}}</option>
-
-				        {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="term">
-			        	<option>Term</option>
-			        	{% for i in terms %}
-				        <option>{{i.term_name}}</option>
-				        {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="class">
-			        	<option>Class</option>
-				        {% for i in classes %}
-				        	<option>{{ i.class_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="subject">
-			        	<option>Subject</option>
-				        {% for i in subjects %}
-					    	<option>{{ i.subject_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <button name="form1" type="submit" class="btn btn-primary">GET</button>
-			</div>
-		</form>
-	</div>
-{% if messages %}
-  {% for msg in messages %}
-    <div class="alert alert-info alert-dismissable">
-      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-      {{msg.message}}
+<form name="form1" method="POST" class="panel">
+  {% csrf_token %}
+  <div class="panel-body">
+    <div class="form-row">
+      {% include "src/_f_session.html" %}{% include "src/_f_term.html" %}{% include "src/_f_class.html" %}{% include "src/_f_subject.html" %}
     </div>
-  {% endfor %}
+  </div>
+  <div class="panel-footer"><button name="form1" type="submit" class="btn btn-primary"><i class="fas fa-search"></i>Load results</button></div>
+</form>
+
+{% if sel and all_results %}
+<form name="form2" method="POST" class="panel">
+  {% csrf_token %}
+  <div class="panel-header"><h2>Scores</h2><span class="hint">{{ all_results|length }} students</span></div>
+  <div class="panel-body pb-0">{% include "src/_selection.html" %}</div>
+  <div class="table-scroll">
+    <table class="table table-app">
+      <thead><tr><th style="width: 48px">#</th><th>Student</th><th class="text-center">1st C.A <span class="muted">/20</span></th><th class="text-center">2nd C.A <span class="muted">/20</span></th><th class="text-center">Exams <span class="muted">/60</span></th></tr></thead>
+      <tbody>
+      {% for i in all_results %}
+        <tr>
+          <td class="muted">{{ forloop.counter }}</td>
+          <td><input type="hidden" name="result_id" value="{{ i.id }}"><input type="hidden" name="name" value="{{ i.student }}">{{ i.student }}</td>
+          <td class="text-center"><input type="number" class="form-control form-control-sm score-input d-inline-block" value="{{ i.ca1 }}" name="ca1"></td>
+          <td class="text-center"><input type="number" class="form-control form-control-sm score-input d-inline-block" value="{{ i.ca2 }}" name="ca2"></td>
+          <td class="text-center"><input type="text" class="form-control form-control-sm score-input d-inline-block" maxlength="3" value="{{ i.exam_display }}" name="exams"></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel-footer"><button name="form2" type="submit" class="btn btn-primary"><i class="fas fa-save"></i>Save changes</button></div>
+</form>
 {% endif %}
-
-{% if request.method == 'POST' and "form1" in request.POST %}
-	<div>
-		<h4> Please Insert the students Results approprietly </h4>
-	</div>
-	<div class="row" style="padding-right: 10px;">
-
-		<div class="col">
-			<h6> Name </h6>
-		</div>
-		<div class="col">
-			<h6> First C.A </h6>
-		</div>
-		<div class="col">
-			<h6> Second C.A </h6>
-		</div>
-		<div class="col">
-			<h6> Exams </h6>
-		</div>
-	</div>
-
-	<form name="form2" method="POST">
-		{% csrf_token %}
-		{% for i in all_results %}
-	 	 <div class="row" style="padding-right: 10px; padding-left: 10px;">
-
-		    <div class="col">
-				<input type="text" class="form-control" value="{{i.student}}" name="name">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value={{i.ca1}} name="ca1" style="text-align: center;">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value={{i.ca2}} name="ca2" style="text-align: center;">
-		    </div>
-		    <div class="col">
-				<input type="number" class="form-control" value={{i.exams}} name="exams" style="text-align: center;">
-		    </div>
-		</div>
-		{% endfor %}
-		<div class="container">
-		  <div class="center">
-		    <button name ="form2" type="submit" class="btn btn-primary">Update</button>
-		  </div>
-		</div>
-	</form>
-{% endif %}
-
-{% endblock content %}
-
+{% endblock %}

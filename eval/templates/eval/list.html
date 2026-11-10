@@ -1,0 +1,63 @@
+{% extends "src/index.html" %}
+{% block title %}Teacher evaluations{% endblock %}
+{% block crumb %}Teacher evaluation{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Teacher evaluations</h1>
+    <p>Lesson observations recorded for {% if sees_all %}all sections{% else %}{{ my_section }}{% endif %}. Open one to print it, or print all that match the filter.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'evaluation' %}" class="btn btn-primary"><i class="fas fa-plus"></i>New evaluation</a>
+  </div>
+</div>
+
+<form method="GET" class="panel">
+  <div class="panel-body">
+    <div class="form-row">
+      <div class="form-group col-md">
+        <label for="f-teacher">Teacher or assessor</label>
+        <input class="form-control" id="f-teacher" name="teacher" value="{{ filters.teacher }}" placeholder="Any">
+      </div>
+      <div class="form-group col-md">
+        <label for="f-from">From</label>
+        <input class="form-control" type="date" id="f-from" name="from" value="{{ filters.from|date:'Y-m-d' }}">
+      </div>
+      <div class="form-group col-md">
+        <label for="f-to">To</label>
+        <input class="form-control" type="date" id="f-to" name="to" value="{{ filters.to|date:'Y-m-d' }}">
+      </div>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <button type="submit" class="btn btn-light"><i class="fas fa-filter"></i>Filter</button>
+    {% if evaluations %}<a class="btn btn-light" href="?{{ query }}{% if query %}&amp;{% endif %}print=1" target="_blank" rel="noopener"><i class="fas fa-print"></i>Print all {{ evaluations|length }}</a>{% endif %}
+  </div>
+</form>
+
+<div class="panel">
+  {% if evaluations %}
+  <div class="table-scroll">
+    <table class="table table-app">
+      <thead><tr><th>Date</th><th>Teacher</th><th>Class</th><th>Subject</th><th>Topic</th><th>Assessor</th><th class="text-right">Score</th><th></th></tr></thead>
+      <tbody>
+      {% for e in evaluations %}
+        <tr>
+          <td>{{ e.date|date:"d-m-Y" }}</td>
+          <td><strong>{{ e.teacher_name }}</strong></td>
+          <td>{{ e.student_class|default:"—" }}</td>
+          <td>{{ e.subject }}</td>
+          <td>{{ e.topic }}</td>
+          <td>{{ e.assessor }}</td>
+          <td class="text-right">{{ e.total }}/{{ e.maximum }} <span class="badge {% if e.percent >= 70 %}badge-soft{% elif e.percent >= 50 %}badge-soft-warning{% else %}badge-soft-danger{% endif %}">{{ e.percent }}%</span></td>
+          <td class="text-right"><a href="{% url 'evaluation-detail' e.pk %}" target="_blank" rel="noopener" class="btn btn-sm btn-light"><i class="fas fa-print"></i>Open</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="panel-body"><p class="muted mb-0">No evaluations match.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

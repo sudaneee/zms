@@ -1,0 +1,107 @@
+{% extends "src/index.html" %}
+{% block title %}Evaluate a teacher{% endblock %}
+{% block crumb %}Teacher evaluation{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Evaluate a teacher</h1>
+    <p>Record a lesson observation. Rate every item from Deficient (1) to Above Average (5).</p>
+  </div>
+  <div class="page-actions"><a href="{% url 'evaluation-view' %}" class="btn btn-light"><i class="fas fa-list"></i>All evaluations</a></div>
+</div>
+
+<form method="POST" class="panel">
+  {% csrf_token %}
+  <div class="panel-header"><h2>Lesson</h2></div>
+  <div class="panel-body">
+    <div class="form-row">
+      <div class="form-group col-md">
+        <label for="f-teacher">Teacher's name</label>
+        <input class="form-control" id="f-teacher" name="teacher_name" value="{{ values.teacher_name }}" required maxlength="100">
+      </div>
+      <div class="form-group col-md">
+        <label for="f-class">Class taught</label>
+        <select class="custom-select" name="class" id="f-class" required>
+          <option value="">Choose class</option>
+          {% for i in classes %}<option value="{{ i.id }}" {% if values.class == i.id|stringformat:"s" %}selected{% endif %}>{{ i.class_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group col-md">
+        <label for="f-subject">Subject taught</label>
+        <select class="custom-select" name="subject" id="f-subject" required>
+          <option value="">Choose subject</option>
+          {% for i in subjects %}<option value="{{ i.id }}" {% if values.subject == i.id|stringformat:"s" %}selected{% endif %}>{{ i.subject_name }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group col-md">
+        <label for="f-topic">Topic taught</label>
+        <input class="form-control" id="f-topic" name="topic" value="{{ values.topic }}" required maxlength="200">
+      </div>
+      <div class="form-group col-md">
+        <label for="f-sub">Sub-topic</label>
+        <input class="form-control" id="f-sub" name="sub_topic" value="{{ values.sub_topic }}" maxlength="200">
+      </div>
+      <div class="form-group col-md">
+        <label for="f-assessor">Name of assessor</label>
+        <input class="form-control" id="f-assessor" name="assessor" value="{% firstof values.assessor user.get_full_name %}" required maxlength="100">
+      </div>
+      <div class="form-group col-md-2">
+        <label for="f-date">Date</label>
+        <input class="form-control" type="date" id="f-date" name="date" value="{% firstof values.date today|date:'Y-m-d' %}" max="{{ today|date:'Y-m-d' }}" required>
+      </div>
+    </div>
+  </div>
+
+  {% for title, items in questions %}
+  <div class="panel-header"><h2>{{ title }}</h2></div>
+  <div class="table-scroll">
+    <table class="table table-app eval-table">
+      <thead><tr><th style="width: 40px">#</th><th>Item</th>{% for value, label in ratings %}<th class="text-center rating-col">{{ label }}<br><span class="muted">{{ value }}</span></th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for q in items %}
+        <tr>
+          <td class="muted">{{ forloop.counter }}</td>
+          <td>{{ q.item }}</td>
+          {% for value, label in ratings %}
+          <td class="text-center"><input type="radio" name="q{{ q.id }}" value="{{ value }}" aria-label="{{ label }}" required></td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+
+  <div class="panel-body">
+    <div class="form-group">
+      <label for="f-comment">General comment</label>
+      <textarea class="form-control" id="f-comment" name="general_comment" rows="3">{{ values.general_comment }}</textarea>
+    </div>
+    <p class="muted mb-0">Total so far: <strong id="eval-total">0</strong> / <span id="eval-max">0</span></p>
+  </div>
+  <div class="panel-footer"><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i>Save evaluation</button></div>
+</form>
+{{ chosen|json_script:"eval-chosen" }}
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var chosen = JSON.parse(document.getElementById('eval-chosen').textContent || '{}');
+  Object.keys(chosen).forEach(function (name) {
+    var input = document.querySelector('input[name="' + name + '"][value="' + chosen[name] + '"]');
+    if (input) input.checked = true;
+  });
+  var names = Array.from(new Set(Array.from(document.querySelectorAll('.eval-table input[type=radio]')).map(function (i) { return i.name; })));
+  document.getElementById('eval-max').textContent = names.length * 5;
+  function update() {
+    var total = 0;
+    document.querySelectorAll('.eval-table input[type=radio]:checked').forEach(function (i) { total += Number(i.value); });
+    document.getElementById('eval-total').textContent = total;
+  }
+  document.addEventListener('change', update);
+  update();
+})();
+</script>
+{% endblock %}

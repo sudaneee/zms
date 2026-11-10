@@ -1,0 +1,60 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teacher evaluation · {{ school_name }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <style>
+    body { background: #fff; color: #111; }
+    .sheet { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    .sheet + .sheet { page-break-before: always; }
+    .header-img { width: 100%; max-height: 160px; object-fit: contain; margin-bottom: 12px; }
+    .table th, .table td { padding: .4rem .6rem; }
+    .toolbar { max-width: 900px; margin: 16px auto 0; padding: 0 16px; }
+    @media print {
+      .toolbar { display: none; }
+      .sheet { margin: 0 auto; }
+      tr, .section-table { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="toolbar">
+  <button class="btn btn-primary btn-sm" onclick="window.print()">Print</button>
+  <a class="btn btn-light btn-sm" href="{% url 'evaluation-view' %}">Back to evaluations</a>
+</div>
+{% for e in evaluations %}
+<div class="sheet">
+  <img class="header-img" src="{% static 'eval/images/header_merit.jpg' %}" alt="{{ school_name }}">
+  <h5 class="text-center mb-3">Teacher Lesson Evaluation</h5>
+  <table class="table table-bordered table-sm">
+    <tr><th>Teacher's Name</th><td>{{ e.teacher_name }}</td><th>Class Taught</th><td>{{ e.student_class|default:"" }}</td></tr>
+    <tr><th>Subject Taught</th><td>{{ e.subject }}</td><th>Topic Taught</th><td>{{ e.topic }}</td></tr>
+    <tr><th>Sub-Topic Taught</th><td>{{ e.sub_topic }}</td><th>Name of Assessor</th><td>{{ e.assessor }}</td></tr>
+    <tr><th>Date</th><td colspan="3">{{ e.date|date:"d-m-Y" }}</td></tr>
+  </table>
+  {% for title, items, subtotal, maximum in e.sections %}
+  <table class="table table-bordered table-sm section-table">
+    <thead>
+      <tr><th class="text-center" colspan="4">{{ title }}</th></tr>
+      <tr><th style="width: 48px">S/N</th><th>Item</th><th style="width: 70px">Score</th><th style="width: 160px">Remark</th></tr>
+    </thead>
+    <tbody>
+    {% for s in items %}
+      <tr><td>{{ forloop.counter }}</td><td>{{ s.question }}</td><td>{{ s.score }}</td><td>{{ s.remark }}</td></tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr><td colspan="2" class="text-right">Sub-Total:</td><td colspan="2"><strong>{{ subtotal }}</strong> / {{ maximum }}</td></tr></tfoot>
+  </table>
+  {% endfor %}
+  <table class="table table-bordered table-sm">
+    <tr><th style="width: 200px">Total Score</th><td><strong>{{ e.total }}</strong> / {{ e.maximum }} ({{ e.percent }}%)</td></tr>
+    <tr><th>General Comment</th><td>{{ e.general_comment|linebreaksbr }}</td></tr>
+  </table>
+</div>
+{% empty %}
+<div class="sheet"><p>No evaluations to print.</p></div>
+{% endfor %}
+</body>
+</html>

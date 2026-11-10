@@ -1,83 +1,21 @@
 {% extends "src/index.html" %}
+{% block title %}Delete assessments{% endblock %}
+{% block crumb %}Administration{% endblock %}
 {% block content %}
+<div class="page-header">
+  <div>
+    <h1>Delete behavioural assessments</h1>
+    <p>Remove a class's assessments for a term that were uploaded by mistake. Deleted assessments go to the <a href="{% url 'recycle_bin' %}">Recycle Bin</a>.</p>
+  </div>
+</div>
 
-<!----------------Styles--------------------------->
-	<style type="text/css">
-		.container {
-		  height: 100px;
-		  position: relative;
-		}
+{% include "src/_delete_confirm.html" %}
 
-		.center {
-		  margin: 0;
-		  position: absolute;
-		  top: 25%;
-		  left: 50%;
-
-		}
-
-		h1, h2, h3, h4, h5, h6 {
-			color: black;
-			text-align: center;
-		}
-		.form-control{
-			color: black;
-		}
-	</style>
-
-
-<!-----------------------------htlm code------------------------->
-	<div>
-		<h1> Delete Student Behavioural Assessment </h1>
-		<h4> Please Select Session, Term, and Class you wish to delete </h4>
-	</div>
-	<div class="main">
-		<form name="form1" method="POST">
-			{% csrf_token %}
-		 	 <div class="row" style="padding-right: 10px;">
-			    <div class="col">
-			        <select class="form-control" name="session">
-			        	<option>Session</option>
-				        <option>2019/2020</option>
-				        <option>2020/2021</option>
-				        <option>2021/2022</option>
-				        <option>2022/2023</option>
-				        <option>2023/2024</option>
-				        <option>2024/2025</option>
-				        <option>2025/2026</option>
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="term">
-			        	<option>Term</option>
-				        <option>First Term</option>
-				        <option>Second Term</option>
-				        <option>Third Term</option>
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="class">
-			        	<option>Class</option>
-				        {% for i in classes %}
-				        	<option>{{ i.class_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <button name="form1" type="submit" class="btn btn-primary">DELETE</button>
-			</div>
-		</form>
-	</div>
-
-
-
-{% if messages %}
-  {% for msg in messages %}
-    <div class="alert alert-info alert-dismissable">
-      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-      {{msg.message}}
-    </div>
-  {% endfor %}
+{% if not confirm %}
+<form name="form1" method="POST" class="panel" style="max-width: 900px">
+  {% csrf_token %}
+  <div class="panel-body"><div class="form-row">{% include "src/_f_session.html" %}{% include "src/_f_term.html" %}{% include "src/_f_class.html" with archived=True %}</div></div>
+  <div class="panel-footer"><button name="form1" type="submit" class="btn btn-outline-danger"><i class="fas fa-trash-alt"></i>Review and delete</button></div>
+</form>
 {% endif %}
-
-{% endblock content %}
-
+{% endblock %}

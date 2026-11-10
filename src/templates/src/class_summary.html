@@ -1,50 +1,18 @@
 {% extends "src/index.html" %}
-{% load static %}
+{% block title %}Subject analysis{% endblock %}
+{% block crumb %}Reports{% endblock %}
 {% block content %}
-
-<!--------------selection form------------------>
-	<div>
-		<h4 style="text-align: center;">Select Class, Term and Session to view results summary</h4>
-	</div>
-	<div class="main">
-		<form name="form1" method="POST">
-			{% csrf_token %}
-		 	 <div class="row" style="padding-right: 10px;">
-		 	 	<div class="col">
-			        <select class="form-control" name="subject">
-			        	<option>Subject</option>
-				        {% for i in subjects %}
-				        	<option>{{ i.subject_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="class">
-			        	<option>Class</option>
-				        {% for i in classes %}
-				        	<option>{{ i.class_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="term">
-			        	<option>Term</option>
-				        {% for i in terms %}
-				        	<option>{{ i.term_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <div class="col">
-			        <select class="form-control" name="session">
-			        	<option>Session</option>
-				        {% for i in sessions %}
-				        	<option>{{ i.session_name }}</option>
-					    {% endfor %}
-				    </select>
-			    </div>
-			    <button name="form1" type="submit" class="btn btn-primary">GET</button>
-			</div>
-		</form>
-	</div>
-
-{% endblock content %}
+<div class="page-header">
+  <div>
+    <h1>Subject analysis</h1>
+    <p>How a class performed in one subject: the number of students at each grade.</p>
+  </div>
+</div>
+<form name="form1" method="POST" class="panel">
+  {% csrf_token %}
+  <div class="panel-body">
+    <div class="form-row">{% include "src/_f_session.html" %}{% include "src/_f_term.html" %}{% include "src/_f_class.html" with archived=True %}{% include "src/_f_subject.html" %}</div>
+  </div>
+  <div class="panel-footer"><button name="form1" type="submit" class="btn btn-primary"><i class="fas fa-chart-bar"></i>Analyse</button></div>
+</form>
+{% endblock %}

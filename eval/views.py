@@ -1,211 +1,124 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from src.models import Subject, StudentClass, Session, Term, Student, StudentResult, StudentBehaviouralAssessment, signature, sets
-from django.db import connection
-from django.contrib.auth import authenticate
-from django.contrib import messages
-from django.contrib.auth.models import User, auth
-import openpyxl
-from openpyxl import Workbook
+"""Teacher lesson evaluations: record, list and print.
+
+Administrators and Heads of Section record evaluations; a Head of Section
+works with the classes of their own section only.
+"""
 import datetime
-from openpyxl.writer.excel import save_virtual_workbook
-from eval.models import General_Info, General_Questions
-from itertools import chain
-# cursor to move around the database
 
+from django.contrib import messages
+from django.db import transaction
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+
+from src import audit
+from src.access import require, scoped_class, scoped_classes, sees_all_sections
+from src.models import Subject
+from eval.models import RATINGS, SECTION_TITLES, Evaluation, EvaluationScore, General_Questions
+
+
+def _questions():
+    grouped = {}
+    for q in General_Questions.objects.all():
+        grouped.setdefault(q.section, []).append(q)
+    return [(SECTION_TITLES.get(k, f'Section {k}'), items) for k, items in sorted(grouped.items())]
+
+
+def _visible(user):
+    """Evaluations the user may see: all for administrators, else their section's classes."""
+    evaluations = Evaluation.objects.select_related('student_class', 'subject')
+    if sees_all_sections(user):
+        return evaluations
+    return evaluations.filter(student_class__in=scoped_classes(user, include_archived=True))
+
+
+def _parse_date(value):
+    try:
+        return datetime.date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@require('evaluate_teachers')
 def evaluation(request):
-    global section_a
-    global section_b
-    global section_c
-    global classs
-    global subject
-    global context
-    global section_a_id
-    global section_b_id
-    global section_c_id
-    global items_id
-    global items
+    """The evaluation form (the URL name predates the upgrade)."""
+    questions = _questions()
+    context = {'questions': questions, 'ratings': RATINGS, 'subjects': Subject.objects.all(),
+               'today': datetime.date.today(), 'values': {}, 'chosen': {}}
+    if request.method != 'POST':
+        return render(request, 'eval/form.html', context)
+
+    data = request.POST
+    values = {k: data.get(k, '').strip() for k in
+              ('teacher_name', 'class', 'subject', 'topic', 'sub_topic', 'general_comment', 'assessor', 'date')}
+    errors = []
+    for field, label in (('teacher_name', "the teacher's name"), ('topic', 'the topic'),
+                         ('assessor', "the assessor's name")):
+        if not values[field]:
+            errors.append(f'Enter {label}.')
+    subject = Subject.objects.filter(pk=values['subject']).first() if values['subject'].isdigit() else None
+    if subject is None:
+        errors.append('Choose a subject.')
+    student_class = scoped_class(request.user, values['class']) if values['class'] else None
+    if student_class is None:
+        errors.append('Choose the class taught.')
+    date = _parse_date(values['date'])
+    if date is None or date > datetime.date.today():
+        errors.append('Enter the date of the lesson (not in the future).')
+    valid = {str(r) for r, _ in RATINGS}
+    scores = {}
+    for _, items in questions:
+        for q in items:
+            raw = data.get(f'q{q.id}', '')
+            if raw in valid:
+                scores[q] = int(raw)
+            else:
+                errors.append(f'Rate "{q.item}".')
+    if errors:
+        for e in errors[:8]:
+            messages.error(request, e)
+        if len(errors) > 8:
+            messages.error(request, f'... and {len(errors) - 8} more.')
+        context['values'] = values
+        context['chosen'] = {f'q{q.id}': str(v) for q, v in scores.items()}
+        return render(request, 'eval/form.html', context)
+
+    with transaction.atomic():
+        record = Evaluation.objects.create(
+            teacher_name=values['teacher_name'], student_class=student_class, subject=subject,
+            topic=values['topic'], sub_topic=values['sub_topic'], general_comment=values['general_comment'],
+            assessor=values['assessor'], date=date, recorded_by=request.user)
+        EvaluationScore.objects.bulk_create(
+            [EvaluationScore(evaluation=record, question=q, score=v) for q, v in scores.items()])
+        audit.log('create', model='Evaluation', object_id=record.pk, object_repr=str(record),
+                  section_id=student_class.section_id,
+                  details={'total': record.total(), 'maximum': record.maximum()})
+    messages.success(request, f'Evaluation of {record.teacher_name} saved ({record.total()}/{record.maximum()}).')
+    return redirect('evaluation-detail', record.pk)
 
 
-    section_a =General_Questions.objects.filter(section="A").all()
-    section_b =General_Questions.objects.filter(section="B").all()
-    section_c =General_Questions.objects.filter(section="C").all()
-    classs = StudentClass.objects.all()
-    subject = Subject.objects.all()
-    context = {
-    'classs': classs,
-    'subject': subject,
-    'section_a': section_a,
-    'section_b': section_b,
-    'section_c': section_c,
-
-    }		
-
-
-    items_id = [i.id for i in General_Questions.objects.all()]
-
-
-
-    if request.method == 'POST':
-        name = request.POST['name']
-        tbl1_score = request.POST.getlist('tbl1-grade')
-        tbl2_score = request.POST.getlist('tbl2-grade')
-        tbl3_score = request.POST.getlist('tbl3-grade')
-        a_scores = []
-        b_scores = []
-        c_scores = []
-
-        #--------------- getting inputs for table 1------------------
-        for i in tbl1_score:
-            if i == "Above Average":
-                score = 5
-            elif i == "Average":
-                score = 4
-            elif i == "Satisfactory":
-                score = 3
-            elif i == "Not satisfactory":
-                score == 2
-            elif i == "Deficient":
-                score = 1
-            else: 
-                score = 0
-            a_scores.append(score)
-
-        print(a_scores)
-
-        #--------------- getting inputs for table 2------------------
-        for i in tbl2_score:
-            if i == "Above Average":
-                score = 5
-            elif i == "Average":
-                score = 4
-            elif i == "Satisfactory":
-                score = 3
-            elif i == "Not satisfactory":
-                score == 2
-            elif i == "Deficient":
-                score = 1
-            else: 
-                score = 0
-            b_scores.append(score)
-
-        print(b_scores)
-
-        #--------------- getting inputs for table 3------------------
-        for i in tbl3_score:
-            if i == "Above Average":
-                score = 5
-            elif i == "Average":
-                score = 4
-            elif i == "Satisfactory":
-                score = 3
-            elif i == "Not satisfactory":
-                score == 2
-            elif i == "Deficient":
-                score = 1
-            else: 
-                score = 0
-            c_scores.append(score)
-
-        print(b_scores)
-
-        teacher_name = request.POST['name']
-        class_taught = request.POST['class']
-        subject_taught = request.POST['subject']
-        topic_taught = request.POST['topic']
-        sub_topic_taught = request.POST['sub-topic']
-        general_comment = request.POST['g_comment']
-        assessors_name = request.POST['a_name']
-        all_scores = a_scores + b_scores + c_scores
-        
-        for i, j in zip(all_scores, General_Questions.objects.all()):
-            temp = General_Info(teacher_name = teacher_name,
-                classs = StudentClass.objects.get(class_name=class_taught),
-                subject = Subject.objects.get(subject_name=subject_taught),
-                topic = topic_taught,
-                sub_topic = sub_topic_taught,
-                questions_items = General_Questions.objects.get(id=j.id),
-                score = i,
-                general_comment = general_comment,
-                assessor = assessors_name
-                )
-            temp.save()
-    
-        messages.success(request, 'Submitted Successfully')
-
-        #print(another)
-
-        return render(request, "eval/index.html", context)
-        
-    else:
-        return render(request, "eval/index.html", context)
-
+@require('evaluate_teachers')
 def evaluation_view(request):
-
-    if request.method == 'POST' and "form1" in request.POST:
-        date = request.POST['date']
-
-        somedate = datetime.date.today()
-        results = General_Info.objects.filter(upload_date=date).all()
-
-        bulk = {}
-
-        for result in results:
-            a_score = 0
-            a_items = []
-            t_score = []
-            for questions_items in results:
-                if questions_items.teacher_name == result.teacher_name:
-                    a_items.append(questions_items)
-                    a_score += questions_items.score
-                    classs =questions_items.classs
-                    subject =questions_items.subject
-                    topic =questions_items.topic
-                    sub_topic =questions_items.sub_topic
-                    general_comment =questions_items.general_comment
-                    upload_date = questions_items.upload_date
-                    assessor =questions_items.assessor
-                    t_score.append(questions_items.score)
-                    t_score_a = t_score[0:8]
-                    t_score_b = t_score[8:14]
-                    t_score_c = t_score[14:20]
-                    a_t_score = sum(t_score_a)
-                    b_t_score = sum(t_score_b)
-                    c_t_score = sum(t_score_c)
-                    t_total = sum(t_score)
+    """List evaluations with filters; print all of the filtered ones at once."""
+    evaluations = _visible(request.user)
+    start, end = _parse_date(request.GET.get('from')), _parse_date(request.GET.get('to'))
+    teacher = request.GET.get('teacher', '').strip()
+    if start:
+        evaluations = evaluations.filter(date__gte=start)
+    if end:
+        evaluations = evaluations.filter(date__lte=end)
+    if teacher:
+        evaluations = evaluations.filter(Q(teacher_name__icontains=teacher) | Q(assessor__icontains=teacher))
+    evaluations = list(evaluations.prefetch_related('scores'))
+    if request.GET.get('print'):
+        return render(request, 'eval/print.html', {'evaluations': evaluations})
+    query = request.GET.copy()
+    query.pop('print', None)
+    return render(request, 'eval/list.html', {
+        'evaluations': evaluations, 'filters': {'from': start, 'to': end, 'teacher': teacher},
+        'query': query.urlencode()})
 
 
-        
-                    
-
-                bulk[result.teacher_name] = {
-                "teacher_name": result.teacher_name,
-                "a_items": a_items,
-                "a_score": a_score,
-                "classs": classs,
-                "subject": subject,
-                "topic": topic,
-                "sub_topic": sub_topic,
-                "general_comment": general_comment,
-                "assessor": assessor,
-                't_total': t_total,
-                "t_score_a": t_score_a,
-                "a_t_score": a_t_score,
-                "b_t_score": b_t_score,
-                "c_t_score": c_t_score,
-                "upload_date":upload_date,
-
-                }
-
-        context = {
-            'results': bulk
-        }
-
-        return render(request, 'eval/eval-resut.html', context)
-    else:
-        classes = StudentClass.objects.all()
-        context = {
-            'classes': classes
-        }
-        return render(request, 'eval/eval_resut1.html', context)
-
+@require('evaluate_teachers')
+def evaluation_detail(request, pk):
+    record = get_object_or_404(_visible(request.user), pk=pk)
+    return render(request, 'eval/print.html', {'evaluations': [record]})
